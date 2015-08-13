@@ -131,6 +131,7 @@ void Chip8Emulator::opcodeError()
 	return;
 }
 
+/*
 //This is going to be the fun one!
 int Chip8Emulator::decodeOpcode()
 {
@@ -315,3 +316,4 @@ int Chip8Emulator::decodeOpcode()
 	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;
 }
+/*

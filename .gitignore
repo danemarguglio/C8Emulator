@@ -49,3 +49,6 @@ Debug/Chip8Emulator.obj
 Debug/vc110.idb
 *.pdb
 Debug/main.obj
+*.suo
+*.exe
+*.o
