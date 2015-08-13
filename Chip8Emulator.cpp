@@ -6,6 +6,8 @@ Chip8Emulator::Chip8Emulator(void)
 	/*
 		I know 0x00 and 0x000 are the same as 0.. but it helps me keep track of their sizes :(
 	*/
+	//We need random numbers
+	srand (time(NULL));
 
 	//Clear memory
 	for(int memory_index = 0; memory_index < 4096; memory_index++)
@@ -236,6 +238,10 @@ int Chip8Emulator::decodeOpcode()
 		switch(opcode & 0x000F)
 		{
 		case 0x0000://0x9XY0 Skips the next instruction if VX doesn't equal VY.
+			if(registers[opcode & 0x0F00 >> 8] != registers[opcode & 0x00F0 >> 4])
+				program_counter += 4;
+			else
+				program_counter += 2;
 			break;
 		default:
 			opcodeError();
@@ -244,11 +250,17 @@ int Chip8Emulator::decodeOpcode()
 		break;
 
 	case 0xA000://0xANNN Sets I to the address NNN.
+		index_register = opcode & 0x0FFF;
 		break;
+
 	case 0xB000://0xBNNN Jumps to the address NNN plus V0.
+		program_counter = (opcode & 0x0FFF) + registers[0];
 		break;
+
 	case 0xC000://0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
+
 		break;
+	
 	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
 		break;
 
