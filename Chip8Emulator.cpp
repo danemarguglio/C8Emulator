@@ -240,7 +240,9 @@ int Chip8Emulator::decodeOpcode()
 	// 1111 0000 0000 0000   0xF000
 	// ABCD 0000 0000 0000   &
 
-    increment_pc();
+	//I dont like this only because jump commands dont increment pointer.
+	//It'd prolly be easier to keep this and just modify those functions though idk.
+    //increment_pc();
 
 
 	//Check first nibble :)
