@@ -55,6 +55,8 @@ class Chip8Emulator
 	void reg_shift_rt();
 	void reg_shift_lt();
 	
+	unsigned char chip8_fontset[80];
+
 
 public:
 	Chip8Emulator(void);
