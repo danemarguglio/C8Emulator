@@ -77,14 +77,12 @@ int Chip8Emulator::loadProgram(const char* file_name)
 		open_file.read (file_in_memory, file_size);
 		open_file.close();
 
-		cout << "Size: " << file_size << endl;
+		cout << "File Size: " << file_size << endl;
 		//TODO check if file meets our critera for openin!
 
 		//Put file in Chip-8 memory starting at 0x200
-		unsigned char test[500];
-		//memcpy ( &test+8, &file_in_memory, sizeof(file_in_memory));
-		//memcpy ( &memory + 0x200*8, &file_in_memory, sizeof(file_in_memory));
-		
+		memcpy ( &memory[0]+0x200 , &file_in_memory, sizeof(file_in_memory));
+		delete[] file_in_memory;
 		return 0;
 	}
 	else
@@ -125,11 +123,111 @@ void Chip8Emulator::updateTimers()
 		sound_timer--;
 	}
 }
-
+//Report opcode errors
+void Chip8Emulator::opcodeError()
+{
+	return;
+}
 
 //This is going to be the fun one!
 int Chip8Emulator::decodeOpcode()
 {
+	// ABCD DEFG HIJK LMNO   opcode
+	// 1111 0000 0000 0000   0xF000
+	// ABCD 0000 0000 0000   &
+
+	//Check first nibble :)
+	switch(opcode & 0xF000)
+	{
+	case 0x0000://First byte 0x00
+		switch (opcode & 0x00FF)
+		{
+		case 0x00E0://0x00E0 Clear screen
+			break;
+		case 0x00EE://0x00EE Return from subroutine
+			break;
+		default:
+			opcodeError();
+		}
+		break;
+
+	case 0x1000://0x1NNN Jump to address NNN.
+		break;
+	case 0x2000://0x2NNN Call subroutine at NNN.
+		break;
+	case 0x3000://0x3XNN Skips the next instruction if VX equals NN.
+		break;
+	case 0x4000://0x4XNN Skips the next instruction if VX doesn't equal NN.
+		break;
+	case 0x5000://0x5XY0 Skips the next instruction if VX equals VY.
+		break;
+	case 0x6000://0x6XNN Sets VX to NN.
+		break;
+	case 0x7000://0x7XNN Adds NN to VX.
+		break;
+
+	case 0x8000://0x8
+		//9 opcodes here determined by last nibble
+		switch(opcode & 0x000F)
+		{
+		case 0x0000://0x8XY0 Sets VX to the value of VY.
+			break;
+		case 0x0001://0x8XY1 Sets VX to VX or VY.
+			break;
+		case 0x0002://0x8XY2 Sets VX to VX and VY.
+			break;
+		case 0x0003://0x8XY3 Sets VX to VX xor VY.
+			break;
+		case 0x0004://0x8XY4 Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
+			break;
+		case 0x0005://0x8XY5 VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+			break;
+		case 0x0006://0x8XY6 Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.
+			break;
+		case 0x0007://0x8XY7 Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+			break;
+		case 0x000E://0x8XYE Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.
+			break;
+		default:
+			opcodeError();
+			break;
+		}
+		break;
+
+	case 0x9000://0x9
+		switch(opcode & 0x000F)
+		{
+		case 0x0000://0x9XY0 Skips the next instruction if VX doesn't equal VY.
+			break;
+		default:
+			opcodeError();
+			break;
+		}
+		break;
+
+	case 0xA000://0xANNN Sets I to the address NNN.
+		break;
+	case 0xB000://0xBNNN Jumps to the address NNN plus V0.
+		break;
+	case 0xC000://0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
+		break;
+	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
+		break;
+
+	case 0xE000://0xE
+
+		break;
+
+	case 0xF000://0xF
+		break;
+
+
+	default:
+		opcodeError();
+		break;
+	}
+
+
 
 	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;

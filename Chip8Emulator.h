@@ -33,6 +33,9 @@ class Chip8Emulator
 	unsigned char input[16];
 
 	//TODO font set
+
+	//Opcode errors
+	void opcodeError();
 	
 
 public:
