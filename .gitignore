@@ -41,3 +41,11 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+C8Emulator.vcxproj.filters
+Debug/C8Emulator.lastbuildstate
+*.log
+Debug/Chip8Emulator.obj
+*.tlog
+Debug/vc110.idb
+*.pdb
+Debug/main.obj
