@@ -38,16 +38,20 @@ class Chip8Emulator
 	//Opcode errors
 	void opcodeError();
 
+	//control flow
+	void increment_pc();
+	void jump(unsigned short);
 
-	void reg_to_reg(unsigned char x, unsigned char y);
-	void reg_to_reg_or(unsigned char x, unsigned char y);
-	void reg_to_reg_and(unsigned char x, unsigned char y);
-	void reg_to_reg_xor(unsigned char x, unsigned char y);
-	void reg_to_reg_add(unsigned char x, unsigned char y);
-	void reg_to_reg_sub(unsigned char x, unsigned char y);
-	void reg_to_reg_sub_inv(unsigned char x, unsigned char y);
-	void reg_shift_rt(unsigned char x, unsigned char y);
-	void reg_shift_lt(unsigned char x, unsigned char y);
+	//Register manip
+	void reg_to_reg();
+	void reg_to_reg_or();
+	void reg_to_reg_and();
+	void reg_to_reg_xor();
+	void reg_to_reg_add();
+	void reg_to_reg_sub();
+	void reg_to_reg_sub_inv();
+	void reg_shift_rt();
+	void reg_shift_lt();
 	
 
 public:
