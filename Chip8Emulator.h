@@ -1,4 +1,6 @@
 #pragma once
+#include <fstream>
+#include <iostream>
 class Chip8Emulator
 {
 	//Most systems CHIP-8 was implemented on had 4096 memory locations (all 8 bits)
@@ -43,7 +45,7 @@ public:
 	int decodeOpcode();
 	void updateTimers();
 
-	void loadProgram();
+	int loadProgram(const char*);
 
 
 };

@@ -10,7 +10,7 @@ Chip8Emulator::Chip8Emulator(void)
 	//Clear memory
 	for(int memory_index = 0; memory_index < 4096; memory_index++)
 	{
-		memory[memory_index] = 0x00;
+		memory[memory_index] = 0;
 	}
 
 	//Clear stack
@@ -59,10 +59,39 @@ Chip8Emulator::~Chip8Emulator(void)
 {
 }
 
-void Chip8Emulator::loadProgram()
+int Chip8Emulator::loadProgram(const char* file_name)
 {
 	//Load program into memory!
-	return;
+	using namespace std;
+	
+	ifstream open_file(file_name, ios::in|ios::binary|ios::ate);
+	
+	if (open_file.is_open())
+	{
+		cout << "Opened file " << file_name << endl;
+		streampos file_size = open_file.tellg();
+		char * file_in_memory = new char [file_size];
+		//Go to beginning of file
+		open_file.seekg (0, ios::beg);
+		//Store file in memory
+		open_file.read (file_in_memory, file_size);
+		open_file.close();
+
+		cout << "Size: " << file_size << endl;
+		//TODO check if file meets our critera for openin!
+
+		//Put file in Chip-8 memory starting at 0x200
+		unsigned char test[500];
+		//memcpy ( &test+8, &file_in_memory, sizeof(file_in_memory));
+		//memcpy ( &memory + 0x200*8, &file_in_memory, sizeof(file_in_memory));
+		
+		return 0;
+	}
+	else
+	{
+		cout <<"FNF\n";
+		return -1;
+	}
 }
 
 void Chip8Emulator::fetchOpcode()
