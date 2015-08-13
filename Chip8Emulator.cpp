@@ -215,10 +215,43 @@ int Chip8Emulator::decodeOpcode()
 		break;
 
 	case 0xE000://0xE
-
+		switch(opcode & 0x00FF)
+		{
+		case 0x009E://0xEX9E Skips the next instruction if the key stored in VX is pressed.
+			break;
+		case 0x00A1://0xEXA1 Skips the next instruction if the key stored in VX isn't pressed.
+			break;
+		default:
+			opcodeError();
+			break;
+		}
 		break;
 
 	case 0xF000://0xF
+		switch(opcode & 0x00FF)
+		{
+		case 0x0007://0xFX07 Sets VX to the value of the delay timer.
+			break;
+		case 0x000A://0xFX0A A key press is awaited, and then stored in VX.
+			break;
+		case 0x0015://0xFX15 Sets the delay timer to VX.
+			break;
+		case 0x0018://0xFX18 Sets the sound timer to VX.
+			break;
+		case 0x001E://0xFX1E Adds VX to I.
+			break;
+		case 0x0029://0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+			break;
+		case 0x0033://0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
+			break;
+		case 0x0055://0xFX55 Stores V0 to VX in memory starting at address I.
+			break;
+		case 0x0065://0xFX65 Fills V0 to VX with values from memory starting at address I.
+			break;
+		default:
+			opcodeError();
+			break;
+		}
 		break;
 
 
