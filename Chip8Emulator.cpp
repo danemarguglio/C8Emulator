@@ -1,6 +1,18 @@
 #include "Chip8Emulator.h"
 
 
+void Chip8Emulator::test(){
+    using namespace std;
+    registers[0] = 0xFF;
+    registers[1] = 0xFF;
+
+    opcode = 0x8014;
+
+    reg_to_reg_add();
+
+    cout << (int)registers[0] << " " << (int)registers[1] << " " << (int)((registers[15] << 8) + registers[0]) << endl;
+}
+
 Chip8Emulator::Chip8Emulator(void)
 {
 	/*
@@ -131,13 +143,99 @@ void Chip8Emulator::opcodeError()
 	return;
 }
 
-/*
+
+
+// VX = VY
+void Chip8Emulator::reg_to_reg(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+	registers[x] = registers[y];
+}
+
+// VX = VY or VX
+void Chip8Emulator::reg_to_reg_or(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+    registers[x] = registers[y] | registers[x];
+}
+
+// VX = VY or VX
+void Chip8Emulator::reg_to_reg_and(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+    registers[x] = registers[y] & registers[x];
+}
+
+// VX = VY xor VX
+void Chip8Emulator::reg_to_reg_xor(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+    registers[x] = registers[y] ^ registers[x];
+}
+
+// VX = VY + VX
+// VF = overflow ? 1 : 0
+void Chip8Emulator::reg_to_reg_add(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+    unsigned temp = registers[x] + registers[y];
+    registers[0xF] = (temp & 0xFF00) ? 1 : 0;
+    registers[x] = temp;
+}
+
+// VX = VX - VY
+// VF = borrow ? 1 : 0
+void Chip8Emulator::reg_to_reg_sub(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+    registers[0xF] = (registers[y] > registers[x]) ? 1 : 0;
+    registers[x] = registers[x] - registers[y];
+}
+
+// VX = VY - VX
+// VF = borrow ? 0 : 1
+void Chip8Emulator::reg_to_reg_sub_inv(){
+    unsigned char x = nibble(2,opcode);
+    unsigned char y = nibble(1,opcode);
+    registers[0xF] = (registers[y] < registers[x]) ? 0 : 1;
+    registers[x] = registers[y] - registers[x];
+}
+
+// VX = VX >> 1
+// VF = right of VX
+void Chip8Emulator::reg_shift_rt(){
+    unsigned char x = nibble(2,opcode);
+    registers[0xf] = (registers[x] & 0x1);
+    registers[x] = registers[x] >> 1;
+}
+
+// VX = VX << 1
+// VF = left of VX
+void Chip8Emulator::reg_shift_lt(){
+    unsigned char x = nibble(2,opcode);
+    registers[0xf] = (registers[x] & 0x80);
+    registers[x] = registers[x] << 1;
+}
+
+//Program_couter++
+void Chip8Emulator::increment_pc(){
+    program_counter += 2;
+}
+
+// Jump unconditionally to addr
+void Chip8Emulator::jump(){
+    program_counter = opcode & 0x0fff;
+}
+
 //This is going to be the fun one!
 int Chip8Emulator::decodeOpcode()
 {
 	// ABCD DEFG HIJK LMNO   opcode
 	// 1111 0000 0000 0000   0xF000
 	// ABCD 0000 0000 0000   &
+
+    increment_pc();
+
 
 	//Check first nibble :)
 	switch(opcode & 0xF000)
@@ -155,7 +253,7 @@ int Chip8Emulator::decodeOpcode()
 		break;
 
 	case 0x1000://0x1NNN Jump to address NNN.
-		program_counter = opcode & 0x0FFF;
+        jump(opcode & 0x0FFF);
 		break;
 
 	case 0x2000://0x2NNN Call subroutine at NNN.
@@ -207,27 +305,32 @@ int Chip8Emulator::decodeOpcode()
 		switch(opcode & 0x000F)
 		{
 		case 0x0000://0x8XY0 Sets VX to the value of VY.
-			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x00F0 >> 4];
+			reg_to_reg();
 			break;
 
 		case 0x0001://0x8XY1 Sets VX to VX or VY.
-			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x0F00 >> 8] | registers[opcode & 0x00F0 >> 4];
+            reg_to_reg_or();
 			break;
 		case 0x0002://0x8XY2 Sets VX to VX and VY.
-			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x0F00 >> 8] & registers[opcode & 0x00F0 >> 4];
+            reg_to_reg_and();
 			break;
 		case 0x0003://0x8XY3 Sets VX to VX xor VY.
-			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x0F00 >> 8] ^ registers[opcode & 0x00F0 >> 4];
-			break;
-		case 0x0004://0x8XY4 Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
-			break;
-		case 0x0005://0x8XY5 VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
-			break;
-		case 0x0006://0x8XY6 Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.
-			break;
-		case 0x0007://0x8XY7 Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
-			break;
-		case 0x000E://0x8XYE Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.
+            reg_to_reg_xor();
+            break;
+        case 0x0004://0x8XY4 Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
+            reg_to_reg_add();
+            break;
+        case 0x0005://0x8XY5 VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+            reg_to_reg_sub();
+            break;
+        case 0x0006://0x8XY6 Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.
+            reg_shift_rt();
+            break;
+        case 0x0007://0x8XY7 Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+            reg_to_reg_sub_inv();
+            break;
+        case 0x000E://0x8XYE Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.
+            reg_shift_lt();
 			break;
 		default:
 			opcodeError();

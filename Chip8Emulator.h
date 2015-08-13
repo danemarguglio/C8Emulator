@@ -37,6 +37,21 @@ class Chip8Emulator
 
 	//Opcode errors
 	void opcodeError();
+
+	//control flow
+	void increment_pc();
+	void jump();
+
+	//Register manip
+	void reg_to_reg();
+	void reg_to_reg_or();
+	void reg_to_reg_and();
+	void reg_to_reg_xor();
+	void reg_to_reg_add();
+	void reg_to_reg_sub();
+	void reg_to_reg_sub_inv();
+	void reg_shift_rt();
+	void reg_shift_lt();
 	
 
 public:
