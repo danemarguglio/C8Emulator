@@ -1,4 +1,10 @@
 #include "Chip8Emulator.h"
+// macro: num = 0xABCD
+//        nibble(0,num) -> D
+//        nibble(1,num) -> C
+//        nibble(2,num) -> B
+//        nibble(3,num) -> A
+#define nibble(index,num) ((num & (0x000F << 4*index)) >> (4*index))
 
 
 void Chip8Emulator::test(){
