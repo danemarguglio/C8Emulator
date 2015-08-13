@@ -259,7 +259,7 @@ int Chip8Emulator::decodeOpcode()
 		break;
 
 	case 0x1000://0x1NNN Jump to address NNN.
-        jump(opcode & 0x0FFF);
+        jump();
 		break;
 
 	case 0x2000://0x2NNN Call subroutine at NNN.
@@ -425,4 +425,4 @@ int Chip8Emulator::decodeOpcode()
 	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;
 }
-/*
+

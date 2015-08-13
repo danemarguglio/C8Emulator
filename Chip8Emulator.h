@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <time.h>
+#include <cstring>
+#include <cstdlib>
 class Chip8Emulator
 {
 	//Most systems CHIP-8 was implemented on had 4096 memory locations (all 8 bits)
@@ -65,6 +67,8 @@ public:
 	void updateTimers();
 
 	int loadProgram(const char*);
+
+	void test();
 
 
 };
