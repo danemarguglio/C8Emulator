@@ -152,18 +152,51 @@ int Chip8Emulator::decodeOpcode()
 		break;
 
 	case 0x1000://0x1NNN Jump to address NNN.
+		program_counter = opcode & 0x0FFF;
 		break;
+
 	case 0x2000://0x2NNN Call subroutine at NNN.
+		stack[stack_pointer] = program_counter; //Store program counter on the stack
+		//prevent stack overflow
+		if(stack_pointer < 16)
+			stack_pointer++;
+		else
+			std::cout << "Stack error";
+		program_counter = opcode & 0x0FFF;//Same as above opcode
 		break;
+
 	case 0x3000://0x3XNN Skips the next instruction if VX equals NN.
+		//X opcode  & 0x0F00, remove last byte >> 8
+		//NN opcode & 0x00FF
+		if(registers[opcode & 0x0F00 >>8] == opcode & 0x00FF)
+			program_counter +=4 ; //Skip next instruction
+		else
+			program_counter += 2; //Normal increment
 		break;
+
 	case 0x4000://0x4XNN Skips the next instruction if VX doesn't equal NN.
+		if(registers[opcode & 0x0F00 >>8] != opcode & 0x00FF)
+			program_counter +=4 ; //Skip next instruction
+		else
+			program_counter += 2; //Normal increment
 		break;
+
 	case 0x5000://0x5XY0 Skips the next instruction if VX equals VY.
+		//X opcode & 0x0F00, remove last byte >> 8
+		//Y opcode & 0x00F0, remove last 4 bits >> 4
+		if (registers[opcode & 0x0F00 >> 8] == registers[opcode & 0x00F0 >> 4])
+			program_counter += 4; //Skip next instruction
+		else
+			program_counter += 2;
 		break;
+
 	case 0x6000://0x6XNN Sets VX to NN.
+		//X  opcode & 0x0F00 >> 8	NN opcode & 0x00FF
+		registers[opcode & 0x0F00 >> 8] = opcode & 0x00FF;
 		break;
+
 	case 0x7000://0x7XNN Adds NN to VX.
+		registers[opcode & 0x0F00 >> 8] += opcode & 0x00FF;
 		break;
 
 	case 0x8000://0x8
@@ -171,12 +204,17 @@ int Chip8Emulator::decodeOpcode()
 		switch(opcode & 0x000F)
 		{
 		case 0x0000://0x8XY0 Sets VX to the value of VY.
+			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x00F0 >> 4];
 			break;
+
 		case 0x0001://0x8XY1 Sets VX to VX or VY.
+			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x0F00 >> 8] | registers[opcode & 0x00F0 >> 4];
 			break;
 		case 0x0002://0x8XY2 Sets VX to VX and VY.
+			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x0F00 >> 8] & registers[opcode & 0x00F0 >> 4];
 			break;
 		case 0x0003://0x8XY3 Sets VX to VX xor VY.
+			registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x0F00 >> 8] ^ registers[opcode & 0x00F0 >> 4];
 			break;
 		case 0x0004://0x8XY4 Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
 			break;
