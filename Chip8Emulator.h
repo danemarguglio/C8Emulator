@@ -37,6 +37,17 @@ class Chip8Emulator
 
 	//Opcode errors
 	void opcodeError();
+
+
+	void reg_to_reg(unsigned char x, unsigned char y);
+	void reg_to_reg_or(unsigned char x, unsigned char y);
+	void reg_to_reg_and(unsigned char x, unsigned char y);
+	void reg_to_reg_xor(unsigned char x, unsigned char y);
+	void reg_to_reg_add(unsigned char x, unsigned char y);
+	void reg_to_reg_sub(unsigned char x, unsigned char y);
+	void reg_to_reg_sub_inv(unsigned char x, unsigned char y);
+	void reg_shift_rt(unsigned char x, unsigned char y);
+	void reg_shift_lt(unsigned char x, unsigned char y);
 	
 
 public:
@@ -50,6 +61,8 @@ public:
 	void updateTimers();
 
 	int loadProgram(const char*);
+
+	void test();
 
 
 };
