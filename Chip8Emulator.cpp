@@ -420,11 +420,11 @@ int Chip8Emulator::decodeOpcode()
 			{
 				if((draw_pixel & (0x80 >> x_line)) != 0)
 				{
-					if(graphics[(x + x_line + ((y + y_line)*32))] == 1)
+					if(graphics[(x + x_line + ((y + y_line)*64))] == 1)
 					{
 						registers[0xF] = 1;
 					}
-					graphics[x + x_line + ((y + y_line)*32)] ^= 1;
+					graphics[x + x_line + ((y + y_line)*64)] ^= 1;
 				}
 			}
 		}
@@ -536,18 +536,28 @@ int Chip8Emulator::decodeOpcode()
 
 void Chip8Emulator::debugGraphics()
 {
-    std::cout << "GRAPHICS" << std::endl;
-	for (int y = 0; y < 64; y++)
+    // printf("\033c");
+    std::cout << "+";
+    for(int i=0;i<64;i++)
+        std::cout << "-";
+    std::cout << "+" << std::endl;
+	for (int y = 0; y < 32; y++)
 	{
-		for(int x = 0; x < 32; x++)
+        std::cout << "|";
+		for(int x = 0; x < 64; x++)
 		{
-			if(graphics[(y*32)+x] == 0)
+			if(graphics[(y*64)+x])
 				std::cout << "X";
 			else
 				std::cout << " ";
 		}
-		std::cout << std::endl;
+		std::cout << "|" << std::endl;
 	}
 	std::cout << std::endl;
+    std::cout << "+";
+    for(int i=0;i<64;i++)
+        std::cout << "-";
+    std::cout << "+" << std::endl;
+    draw_flag = false;
 	return;
 }

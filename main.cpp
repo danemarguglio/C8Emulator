@@ -1,5 +1,5 @@
 #include "Chip8Emulator.h"
-
+#include <unistd.h>
 int main(int argc, char *argv[])
 {
 	using namespace std;
@@ -8,8 +8,9 @@ int main(int argc, char *argv[])
 	while (1)
 	{
 		chip8emulator.cycleCPU();
-		// if (chip8emulator.get_draw())
-		// 	chip8emulator.debugGraphics();
+		if (chip8emulator.get_draw())
+			chip8emulator.debugGraphics();
+		usleep(1000000);
 	}
 	return 0;
 }
