@@ -133,7 +133,7 @@ int Chip8Emulator::loadProgram(const char* file_name)
         memcpy ( &(memory[0x200]) , file_in_memory, size);
         delete[] file_in_memory;
         for(int i=0;i<size;i+=2)
-            printf("%x\n", (memory[0x200+i] << 8) | memory[0x200 + i + 1]);
+            printf("[%x] : %x\n", 0x200 + i, (memory[0x200+i] << 8) | memory[0x200 + i + 1]);
         return 0;
     }
     else
@@ -412,8 +412,6 @@ int Chip8Emulator::decodeOpcode()
 		unsigned short draw_height = nibble(0,opcode);
 		unsigned short draw_pixel;
 		
-        std::cout << x << " " << y << std::endl;
-
 		registers[0xF] = 0;
 		for(int y_line = 0; y_line < draw_height; y_line++)
 		{
@@ -464,7 +462,7 @@ int Chip8Emulator::decodeOpcode()
 		{
 			bool key_pressed = false;
 			
-			for(int input_index; input_index < 16; input_index++)
+			for(int input_index=0; input_index < 16; input_index++)
 			{
 				if(input[input_index] != 0)
 				{
@@ -500,9 +498,9 @@ int Chip8Emulator::decodeOpcode()
 
 		case 0x0033://0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
 			//stole this too
-			memory[index_register]   = registers[(opcode & 0x0F00)>>8]/100;
-			memory[index_register+1] = (registers[(opcode & 0x0F00)>>8]/ 10) %10;
-			memory[index_register+2] = (registers[(opcode & 0x0F00)>>8]%100) %10;	
+			memory[index_register]   = registers[nibble(2,opcode)]/100;
+			memory[index_register+1] = (registers[nibble(2,opcode)]/ 10) %10;
+			memory[index_register+2] = (registers[nibble(2,opcode)]%100) %10;	
 			break;
 
 		case 0x0055://0xFX55 Stores V0 to VX in memory starting at address I.
@@ -538,7 +536,6 @@ int Chip8Emulator::decodeOpcode()
 
 void Chip8Emulator::debugGraphics()
 {
-    // printf("\033c");
     std::cout << "+";
     for(int i=0;i<64;i++)
         std::cout << "-";
@@ -561,5 +558,6 @@ void Chip8Emulator::debugGraphics()
         std::cout << "-";
     std::cout << "+" << std::endl;
     draw_flag = false;
+    system("clear");
 	return;
 }

@@ -8,10 +8,10 @@ int main(int argc, char *argv[])
 	while (1)
 	{
 		chip8emulator.cycleCPU();
-		if (chip8emulator.get_draw()){
-			chip8emulator.debugGraphics();
-			Sleep(1);
-		}
+		// if (chip8emulator.get_draw()){
+		// 	chip8emulator.debugGraphics();
+		// 	Sleep(10);
+		// }
 	}
 	return 0;
 }
