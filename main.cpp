@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 		chip8emulator.cycleCPU();
 		if (chip8emulator.get_draw()){
 			chip8emulator.debugGraphics();
-			Sleep(1000);
+			Sleep(10);
 		}
 	}
 	return 0;

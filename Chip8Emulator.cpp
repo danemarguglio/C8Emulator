@@ -225,7 +225,7 @@ void Chip8Emulator::reg_to_reg_add(){
 void Chip8Emulator::reg_to_reg_sub(){
     unsigned char x = nibble(2,opcode);
     unsigned char y = nibble(1,opcode);
-    registers[0xF] = (registers[y] > registers[x]) ? 1 : 0;
+    registers[0xF] = (registers[y] > registers[x]) ? 0 : 1;
     registers[x] = registers[x] - registers[y];
 }
 
@@ -271,6 +271,7 @@ int Chip8Emulator::decodeOpcode()
 	// 1111 0000 0000 0000   0xF000
 	// ABCD 0000 0000 0000   &
 
+    unsigned char t;
 
     increment_pc();
 
@@ -410,7 +411,7 @@ int Chip8Emulator::decodeOpcode()
 		unsigned short x = registers[nibble(2,opcode)];
 		unsigned short y = registers[nibble(1,opcode)];
 		unsigned short draw_height = nibble(0,opcode);
-		unsigned short draw_pixel;
+		unsigned char draw_pixel;
 		
 		registers[0xF] = 0;
 		for(int y_line = 0; y_line < draw_height; y_line++)
@@ -418,14 +419,21 @@ int Chip8Emulator::decodeOpcode()
 			draw_pixel = memory[index_register + y_line];
 			for(int x_line = 0; x_line < 8; x_line++)
 			{
-				if((draw_pixel & (0x80 >> x_line)) != 0)
-				{
-					if(graphics[(x + x_line + ((y + y_line)*64))] == 1)
-					{
-						registers[0xF] = 1;
-					}
-					graphics[x + x_line + ((y + y_line)*64)] ^= 1;
-				}
+                unsigned char pixel = (draw_pixel & (0x80 >> x_line)) >> (7 - x_line);
+                unsigned char graph1 = graphics[x + x_line + ((y + y_line)*64)];
+                graphics[x + x_line + ((y + y_line)*64)] ^= pixel;
+                unsigned char graph2 = graphics[x + x_line + ((y + y_line)*64)];
+                if(graph1 && !graph2)
+                    registers[0xF] = 1;
+                
+                // if((draw_pixel & (0x8 >> x_line)) != 0)
+                // {
+                //  if(graphics[(x + x_line + ((y + y_line)*64))] == 1)
+                //  {
+                //      registers[0xF] = 1;
+                //  }
+                //  graphics[x + x_line + ((y + y_line)*64)] ^= 1;
+				// }
 			}
 		}
 		
@@ -498,9 +506,15 @@ int Chip8Emulator::decodeOpcode()
 
 		case 0x0033://0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
 			//stole this too
-			memory[index_register]   = registers[nibble(2,opcode)]/100;
-			memory[index_register+1] = (registers[nibble(2,opcode)]/ 10) %10;
-			memory[index_register+2] = (registers[nibble(2,opcode)]%100) %10;	
+            t = registers[nibble(2,opcode)];
+            memory[index_register+2] = t % 10;
+            t /= 10;
+            memory[index_register+1] = t % 10;
+            t /= 10;
+            memory[index_register] = t % 10;
+			// memory[index_register]   = registers[nibble(2,opcode)]/100;
+			// memory[index_register+1] = (registers[nibble(2,opcode)]/ 10) %10;
+			// memory[index_register+2] = (registers[nibble(2,opcode)]%100) %10;	
 			break;
 
 		case 0x0055://0xFX55 Stores V0 to VX in memory starting at address I.
@@ -512,9 +526,9 @@ int Chip8Emulator::decodeOpcode()
 
 		case 0x0065://0xFX65 Fills V0 to VX with values from memory starting at address I.
 			for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
-				registers[register_counter] = memory[index_register];
+				registers[register_counter] = memory[index_register + register_counter];
 			//I = I + X + 1.
-			index_register += (nibble(2,opcode)) + 1;
+			// index_register += (nibble(2,opcode)) + 1;
 			break;
 		default:
 			opcodeError();
