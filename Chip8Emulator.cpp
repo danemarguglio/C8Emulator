@@ -21,63 +21,63 @@ void Chip8Emulator::test(){
 
 Chip8Emulator::Chip8Emulator(void)
 {
-	/*
-		I know 0x00 and 0x000 are the same as 0.. but it helps me keep track of their sizes :(
-	*/
-	//We need random numbers
-	srand (time(NULL));
+    /*
+        I know 0x00 and 0x000 are the same as 0.. but it helps me keep track of their sizes :(
+    */
+    //We need random numbers
+    srand (time(NULL));
 
-	//Clear memory
-	for(int memory_index = 0; memory_index < 4096; memory_index++)
-	{
-		memory[memory_index] = 0;
-	}
+    //Clear memory
+    for(int memory_index = 0; memory_index < 4096; memory_index++)
+    {
+        memory[memory_index] = 0;
+    }
 
-	//Clear stack
-	for(int stack_index = 0; stack_index < 16; stack_index++)
-	{
-		stack[stack_index] = 0x0000;
-	}
+    //Clear stack
+    for(int stack_index = 0; stack_index < 16; stack_index++)
+    {
+        stack[stack_index] = 0x0000;
+    }
 
-	//Clear registers
-	for(int register_index = 0; register_index < 16; register_index++)
-	{
-		registers[register_index] = 0x00;
-	}
+    //Clear registers
+    for(int register_index = 0; register_index < 16; register_index++)
+    {
+        registers[register_index] = 0x00;
+    }
 
 
-	//Usually applications are loaded starting at memory location 512 (0x200)
-	program_counter = 0x200;
+    //Usually applications are loaded starting at memory location 512 (0x200)
+    program_counter = 0x200;
 
-	//Clear current opcode
-	opcode = 0x00;
+    //Clear current opcode
+    opcode = 0x00;
 
-	//Clear index register
-	index_register = 0x00;
+    //Clear index register
+    index_register = 0x00;
 
-	//Clear stack pointer
-	stack_pointer = 0x00;
+    //Clear stack pointer
+    stack_pointer = 0x00;
 
-	//Clear timers
-	sound_timer = 0x00;
-	delay_timer = 0x00;
+    //Clear timers
+    sound_timer = 0x00;
+    delay_timer = 0x00;
 
-	//Clear input
-	for(int input_index = 0; input_index < 16; input_index++)
-	{
-		input[input_index] = 0x00;
-	}
+    //Clear input
+    for(int input_index = 0; input_index < 16; input_index++)
+    {
+        input[input_index] = 0x00;
+    }
 
-	//Clear display
-	for(int graphics_index = 0; graphics_index< 64*32; graphics_index++)
-	{
-		graphics[graphics_index] = 0x00;
-	}
-	draw_flag = false;
+    //Clear display
+    for(int graphics_index = 0; graphics_index< 64*32; graphics_index++)
+    {
+        graphics[graphics_index] = 0x00;
+    }
+    draw_flag = false;
 
-	//Font set (i stole this )
-	unsigned char fontset[80] =
-	{ 
+    //Font set (i stole this )
+    unsigned char fontset[80] =
+    { 
     0xF0, 0x90, 0x90, 0x90, 0xF0, //0
     0x20, 0x60, 0x20, 0x20, 0x70, //1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, //2
@@ -94,11 +94,11 @@ Chip8Emulator::Chip8Emulator(void)
     0xE0, 0x90, 0x90, 0x90, 0xE0, //D
     0xF0, 0x80, 0xF0, 0x80, 0xF0, //E
     0xF0, 0x80, 0xF0, 0x80, 0x80  //F
-	};
-	for (int i = 0; i < 80; i++)
-	{
-		memory[i] = fontset[i];
-	}
+    };
+    for (int i = 0; i < 80; i++)
+    {
+        memory[i] = fontset[i];
+    }
 
 
 }
@@ -108,49 +108,53 @@ Chip8Emulator::~Chip8Emulator(void)
 
 int Chip8Emulator::loadProgram(const char* file_name)
 {
-	//Load program into memory!
-	using namespace std;
-	
-	ifstream open_file(file_name, ios::in|ios::binary|ios::ate);
-	
-	if (open_file.is_open())
-	{
-		cout << "Opened file " << file_name << endl;
-		streampos file_size = open_file.tellg();
-		char * file_in_memory = new char [file_size];
-		//Go to beginning of file
-		open_file.seekg (0, ios::beg);
-		//Store file in memory
-		open_file.read (file_in_memory, file_size);
-		open_file.close();
+    //Load program into memory!
+    using namespace std;
+    
+    ifstream open_file(file_name, ios::in|ios::binary|ios::ate);
+    int size;
+    
+    if (open_file.is_open())
+    {
+        cout << "Opened file " << file_name << endl;
+        streampos file_size = open_file.tellg();
+        size = open_file.tellg();
+        char * file_in_memory = new char [file_size];
+        //Go to beginning of file
+        open_file.seekg (0, ios::beg);
+        //Store file in memory
+        open_file.read (file_in_memory, file_size);
+        open_file.close();
 
-		cout << "File Size: " << file_size << endl;
-		//TODO check if file meets our critera for openin!
+        cout << "File Size: " << file_size << endl;
+        //TODO check if file meets our critera for openin!
 
-		//Put file in Chip-8 memory starting at 0x200
-		memcpy ( &memory[0]+0x200 , &file_in_memory, sizeof(file_in_memory));
-		delete[] file_in_memory;
-		return 0;
-	}
-	else
-	{
-		cout <<"FNF\n";
-		return -1;
-	}
+        //Put file in Chip-8 memory starting at 0x200
+        memcpy ( &(memory[0x200]) , file_in_memory, size);
+        delete[] file_in_memory;
+        for(int i=0;i<size;i+=2)
+            printf("%x\n", (memory[0x200+i] << 8) | memory[0x200 + i + 1]);
+        return 0;
+    }
+    else
+    {
+        cout <<"FNF\n";
+        return -1;
+    }
 }
 
 void Chip8Emulator::fetchOpcode()
 {
-	//Read in two bytes (2 unsigned chars) and store them in an unsigned short
-	//Add 8 zeros to first byte and store the second byte behind it
-	opcode = memory[program_counter] << 8 | memory[program_counter + 1];
-	return;
+    //Read in two bytes (2 unsigned chars) and store them in an unsigned short
+    //Add 8 zeros to first byte and store the second byte behind it
+    opcode = (memory[program_counter] << 8) | (memory[program_counter + 1]);
+    return;
 }
 
 
 void Chip8Emulator::cycleCPU()
 {
-	fetchOpcode();
+    fetchOpcode();
 	decodeOpcode();
 	updateTimers();
 	//TODO Render graphics
@@ -412,15 +416,15 @@ int Chip8Emulator::decodeOpcode()
 		for(int y_line = 0; y_line < draw_height; y_line++)
 		{
 			draw_pixel = memory[index_register + y_line];
-			for(int x_line = 0; y_line < 8; y_line++)
+			for(int x_line = 0; x_line < 8; x_line++)
 			{
 				if((draw_pixel & (0x80 >> x_line)) != 0)
 				{
-					if(graphics[(x + x_line + ((y + y_line)*64))] == 1)
+					if(graphics[(x + x_line + ((y + y_line)*32))] == 1)
 					{
 						registers[0xF] = 1;
 					}
-					graphics[x + x_line + ((y + y_line)*64)] ^= 1;
+					graphics[x + x_line + ((y + y_line)*32)] ^= 1;
 				}
 			}
 		}
@@ -532,11 +536,12 @@ int Chip8Emulator::decodeOpcode()
 
 void Chip8Emulator::debugGraphics()
 {
-	for (int y = 0; y < 32; y++)
+    std::cout << "GRAPHICS" << std::endl;
+	for (int y = 0; y < 64; y++)
 	{
-		for(int x = 0; x < 64; x++)
+		for(int x = 0; x < 32; x++)
 		{
-			if(graphics[(y*64)+x] == 0)
+			if(graphics[(y*32)+x] == 0)
 				std::cout << "X";
 			else
 				std::cout << " ";

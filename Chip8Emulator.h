@@ -4,6 +4,7 @@
 #include <time.h>
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 class Chip8Emulator
 {
 	//Most systems CHIP-8 was implemented on had 4096 memory locations (all 8 bits)
@@ -22,8 +23,8 @@ class Chip8Emulator
 	unsigned char registers[16];
 
 	//Address register
-	unsigned char index_register;
-	unsigned char program_counter;
+	unsigned int index_register;
+	unsigned int program_counter;
 
 	//Timers (1Hz)
 	unsigned char sound_timer;

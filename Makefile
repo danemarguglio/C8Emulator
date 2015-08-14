@@ -10,5 +10,11 @@ all: $(SOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) 
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
-.cpp.o:
+main.o: main.cpp
 	$(CC) $(CFLAGS) $< -o $@
+
+Chip8Emulator.o: Chip8Emulator.cpp Chip8Emulator.h
+	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm *.o Chip8
