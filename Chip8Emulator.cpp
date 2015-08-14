@@ -96,7 +96,7 @@ Chip8Emulator::Chip8Emulator(void)
 	};
 	for (int i = 0; i < 80; i++)
 	{
-		chip8_fontset[i] = fontset[i];
+		memory[i] = fontset[i];
 	}
 
 
