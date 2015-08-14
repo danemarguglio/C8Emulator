@@ -334,7 +334,7 @@ int Chip8Emulator::decodeOpcode()
 
 	case 0x6000://0x6XNN Sets VX to NN.
 		//X  opcode & 0x0F00 >> 8	NN opcode & 0x00FF
-		registers[opcode & 0x0F00 >> 8] = opcode & 0x00FF;
+		registers[nibble(2,opcode)] = opcode & 0x00FF;
 		break;
 
 	case 0x7000://0x7XNN Adds NN to VX.
@@ -407,11 +407,13 @@ int Chip8Emulator::decodeOpcode()
 	//Understand wtf is happening here
 	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
 	{
-		unsigned short x = registers[opcode & 0x0F00 >> 8];
-		unsigned short y = registers[opcode & 0x00F0 >> 4];
-		unsigned short draw_height = opcode & 0x000F;
+		unsigned short x = registers[nibble(2,opcode)];
+		unsigned short y = registers[nibble(1,opcode)];
+		unsigned short draw_height = nibble(0,opcode);
 		unsigned short draw_pixel;
 		
+        std::cout << x << " " << y << std::endl;
+
 		registers[0xF] = 0;
 		for(int y_line = 0; y_line < draw_height; y_line++)
 		{
