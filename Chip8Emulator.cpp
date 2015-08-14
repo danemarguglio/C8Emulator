@@ -493,7 +493,7 @@ int Chip8Emulator::decodeOpcode()
 			break;
 		
 		case 0x0029://0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
-			index_register += registers[nibble(2,opcode)]*0x5;
+			index_register = registers[nibble(2,opcode)]*0x5;
 			break;
 
 		case 0x0033://0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
@@ -558,6 +558,6 @@ void Chip8Emulator::debugGraphics()
         std::cout << "-";
     std::cout << "+" << std::endl;
     draw_flag = false;
-    system("clear");
+    //system("clear");
 	return;
 }
