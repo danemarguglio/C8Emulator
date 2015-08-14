@@ -172,21 +172,36 @@ void Chip8Emulator::updateTimers()
 		if(sound_timer == 1)
 			int x = 0;//TODO make this into a beep!
 		sound_timer--;
-	}
+    }
 }
 //Report opcode errors
 void Chip8Emulator::opcodeError()
 {
-	return;
+    return;
 }
 
 
+
+//0x6XNN Sets VX to NN.
+void Chip8Emulator::reg_to_const(){
+    registers[nibble(2,opcode)] = opcode & 0x00FF;
+}
+
+//0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
+void Chip8Emulator::reg_to_rand(){
+    registers[nibble(2,opcode)] = (opcode & 0x00FF) & (rand()%0xFF);
+}
+
+//0x6XNN Adds VX to NN.
+void Chip8Emulator::reg_to_const_add(){
+	registers[nibble(2,opcode)] += opcode & 0x00FF;
+}
 
 // VX = VY
 void Chip8Emulator::reg_to_reg(){
     unsigned char x = nibble(2,opcode);
     unsigned char y = nibble(1,opcode);
-	registers[x] = registers[y];
+    registers[x] = registers[y];
 }
 
 // VX = VY or VX
@@ -264,82 +279,121 @@ void Chip8Emulator::jump(){
     program_counter = opcode & 0x0fff;
 }
 
+//0xBNNN Jumps to the address NNN plus V0.
+void Chip8Emulator::jump_offset(){
+    program_counter = (opcode & 0x0FFF) + registers[0];
+}
+
+void Chip8Emulator::clear_screen(){
+    for(int graphics_index = 0; graphics_index < 64*32; graphics_index++)
+        graphics[graphics_index] = 0x0;
+    draw_flag = true;
+}
+
+void Chip8Emulator::subr_return(){
+    stack_pointer--; //Dec stack pointer
+    program_counter = stack[stack_pointer]; //Set program counter to the value we pushed on the stack from call subroutine
+}
+
+void Chip8Emulator::subr_call(){
+    stack[stack_pointer] = program_counter; //Store program counter on the stack
+    //prevent stack overflow
+    if(stack_pointer < 16)
+    {
+        program_counter = opcode & 0x0FFF;//Same as above opcode
+        stack_pointer++;
+    }
+    else
+        std::cout << "Stack error";
+}
+
+//0x3XNN Skips the next instruction if VX equals NN.
+//X opcode  & 0x0F00, remove last byte >> 8
+//NN opcode & 0x00FF
+void Chip8Emulator::skip_equal(){
+    if(registers[nibble(2,opcode)] != (opcode & 0x00FF))
+        increment_pc();
+}
+
+void Chip8Emulator::skip_not_equal(){
+    if(registers[nibble(2,opcode)] != (opcode & 0x00FF))
+        increment_pc();
+}
+
+//0x5XY0 Skips the next instruction if VX equals VY.
+void Chip8Emulator::skip_equal_reg(){
+    if (registers[nibble(2,opcode)] == registers[nibble(1,opcode)])
+        increment_pc();
+}
+
+//0x5XY0 Skips the next instruction if VX does not equal VY.
+void Chip8Emulator::skip_not_equal_reg(){
+    if (registers[nibble(2,opcode)] != registers[nibble(1,opcode)])
+        increment_pc();
+}
+
+//0xANNN Sets I to the address NNN.
+void Chip8Emulator::index_to_const(){
+    index_register = opcode & 0x0FFF;
+}
+
 //This is going to be the fun one!
 int Chip8Emulator::decodeOpcode()
 {
-	// ABCD DEFG HIJK LMNO   opcode
-	// 1111 0000 0000 0000   0xF000
-	// ABCD 0000 0000 0000   &
+    // ABCD DEFG HIJK LMNO   opcode
+    // 1111 0000 0000 0000   0xF000
+    // ABCD 0000 0000 0000   &
 
     unsigned char t;
 
     increment_pc();
 
-	//Check first nibble :)
-	switch(opcode & 0xF000)
-	{
-	case 0x0000://First byte 0x00
-		switch (opcode & 0x00FF)
-		{
-		case 0x00E0://0x00E0 Clear screen
-			for(int graphics_index = 0; graphics_index < 64*32; graphics_index++)
-			{
-				graphics[graphics_index] = 0x0;
-			}
-			draw_flag = true;
-			break;
+    //Check first nibble :)
+    switch(opcode & 0xF000)
+    {
+    case 0x0000://First byte 0x00
+        switch (opcode & 0x00FF)
+        {
+        case 0x00E0://0x00E0 Clear screen
+            clear_screen();
+            break;
 
-		case 0x00EE://0x00EE Return from subroutine
-			stack_pointer--; //Dec stack pointer
-			program_counter = stack[stack_pointer]; //Set program counter to the value we pushed on the stack from call subroutine
-			break;
-		default:
-			opcodeError();
-		}
-		break;
+        case 0x00EE://0x00EE Return from subroutine
+            subr_return();
+            break;
+        default:
+            opcodeError();
+        }
+        break;
 
-	case 0x1000://0x1NNN Jump to address NNN.
+    case 0x1000://0x1NNN Jump to address NNN.
         jump();
-		break;
+        break;
 
-	case 0x2000://0x2NNN Call subroutine at NNN.
-		stack[stack_pointer] = program_counter; //Store program counter on the stack
-		//prevent stack overflow
-		if(stack_pointer < 16)
-		{
-			program_counter = opcode & 0x0FFF;//Same as above opcode
-			stack_pointer++;
-		}
-		else
-			std::cout << "Stack error";
-		break;
+    case 0x2000://0x2NNN Call subroutine at NNN.
+        subr_call();
+        break;
 
-	case 0x3000://0x3XNN Skips the next instruction if VX equals NN.
-		//X opcode  & 0x0F00, remove last byte >> 8
-		//NN opcode & 0x00FF
-		if(registers[nibble(2,opcode)] == (opcode & 0x00FF))
-			increment_pc();
-		break;
+    case 0x3000://0x3XNN Skips the next instruction if VX equals NN.
+        //X opcode  & 0x0F00, remove last byte >> 8
+        //NN opcode & 0x00FF
+        skip_equal();
+        break;
 
-	case 0x4000://0x4XNN Skips the next instruction if VX doesn't equal NN.
-		if(registers[nibble(2,opcode)] != (opcode & 0x00FF))
-			increment_pc();
-		break;
+    case 0x4000://0x4XNN Skips the next instruction if VX doesn't equal NN.
+        skip_not_equal();
+        break;
 
-	case 0x5000://0x5XY0 Skips the next instruction if VX equals VY.
-		//X opcode & 0x0F00, remove last byte >> 8
-		//Y opcode & 0x00F0, remove last 4 bits >> 4
-		if (registers[nibble(2,opcode)] == registers[nibble(1,opcode)])
-			increment_pc();
-		break;
+    case 0x5000://0x5XY0 Skips the next instruction if VX equals VY.
+        skip_equal_reg();       
+        break;
 
-	case 0x6000://0x6XNN Sets VX to NN.
-		//X  nibble(2,opcode)	NN opcode & 0x00FF
-		registers[nibble(2,opcode)] = opcode & 0x00FF;
-		break;
+    case 0x6000://0x6XNN Sets VX to NN.
+        reg_to_const();
+        break;
 
-	case 0x7000://0x7XNN Adds NN to VX.
-		registers[nibble(2,opcode)] += opcode & 0x00FF;
+    case 0x7000://0x7XNN Adds NN to VX.
+        reg_to_const_add();
 		break;
 
 	case 0x8000://0x8
@@ -384,8 +438,7 @@ int Chip8Emulator::decodeOpcode()
 		switch(opcode & 0x000F)
 		{
 		case 0x0000://0x9XY0 Skips the next instruction if VX doesn't equal VY.
-			if(registers[nibble(2,opcode)] != registers[nibble(1,opcode)])
-				increment_pc();
+			skip_not_equal_reg();
 			break;
 		default:
 			opcodeError();
@@ -394,15 +447,15 @@ int Chip8Emulator::decodeOpcode()
 		break;
 
 	case 0xA000://0xANNN Sets I to the address NNN.
-		index_register = opcode & 0x0FFF;
+		index_to_const();
 		break;
 
 	case 0xB000://0xBNNN Jumps to the address NNN plus V0.
-		program_counter = (opcode & 0x0FFF) + registers[0];
+        jump_offset();
 		break;
 
 	case 0xC000://0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
-		registers[nibble(2,opcode)] = (opcode & 0x00FF) & (rand()%0xFF);
+        reg_to_rand();
 		break;
 	
 	//Understand wtf is happening here
