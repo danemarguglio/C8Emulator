@@ -42,6 +42,13 @@ class Chip8Emulator
 	//control flow
 	void increment_pc();
 	void jump();
+	void jump_offset();
+	void subr_return();
+	void subr_call();
+	void skip_equal();
+	void skip_not_equal();
+	void skip_equal_reg();
+	void skip_not_equal_reg();
 
 	//Register manip
 	void reg_to_reg();
@@ -53,6 +60,17 @@ class Chip8Emulator
 	void reg_to_reg_sub_inv();
 	void reg_shift_rt();
 	void reg_shift_lt();
+
+	void reg_to_const();
+	void reg_to_rand();
+	void reg_to_const_add();
+	void index_to_const();
+
+
+	//GRAPHICS
+	void clear_screen();
+
+
 
 
 public:

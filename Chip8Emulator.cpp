@@ -311,7 +311,7 @@ void Chip8Emulator::subr_call(){
 //X opcode  & 0x0F00, remove last byte >> 8
 //NN opcode & 0x00FF
 void Chip8Emulator::skip_equal(){
-    if(registers[nibble(2,opcode)] != (opcode & 0x00FF))
+    if(registers[nibble(2,opcode)] == (opcode & 0x00FF))
         increment_pc();
 }
 
