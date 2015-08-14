@@ -436,24 +436,30 @@ int Chip8Emulator::decodeOpcode()
 			//TODO check for overflow..
 			index_register += registers[(opcode & 0x0F00) >> 8];
 			break;
-
-		/*----------------------------TODO--------------------------------------------------------*/
+		
 		case 0x0029://0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+			index_register += registers[(opcode & 0x0F00) >> 8]*0x5;
 			break;
-		/*----------------------------TODO--------------------------------------------------------*/
+
 		case 0x0033://0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
+			//stole this too
+			memory[index_register]   = registers[(opcode & 0x0F00)>>8]/100;
+			memory[index_register+1] = (registers[(opcode & 0x0F00)>>8]/ 10) %10;
+			memory[index_register+2] = (registers[(opcode & 0x0F00)>>8]%100) %10;	
 			break;
 
 		case 0x0055://0xFX55 Stores V0 to VX in memory starting at address I.
 			for(int register_counter = 0; register_counter < (opcode & 0x0F00 >> 8); register_counter++)
-			{
-				//memory[] = registers[register_counter];
-			}
+				memory[index_register + register_counter] = registers[register_counter];
+			//I = I + X + 1.
+			index_register += ((opcode & 0x0F00) >> 8) + 1;
 			break;
+
 		case 0x0065://0xFX65 Fills V0 to VX with values from memory starting at address I.
 			for(int register_counter = 0; register_counter < (opcode & 0x0F00 >> 8); register_counter++)
-			{
-			}
+				registers[register_counter] = memory[index_register];
+			//I = I + X + 1.
+			index_register += ((opcode & 0x0F00) >> 8) + 1;
 			break;
 		default:
 			opcodeError();
