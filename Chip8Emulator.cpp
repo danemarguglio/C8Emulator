@@ -73,6 +73,7 @@ Chip8Emulator::Chip8Emulator(void)
 	{
 		graphics[graphics_index] = 0x00;
 	}
+	draw_flag = false;
 
 	//Font set (i stole this )
 	unsigned char fontset[80] =
@@ -276,8 +277,16 @@ int Chip8Emulator::decodeOpcode()
 		switch (opcode & 0x00FF)
 		{
 		case 0x00E0://0x00E0 Clear screen
+			for(int graphics_index = 0; graphics_index < 64*32; graphics_index++)
+			{
+				graphics[graphics_index] = 0x0;
+			}
+			draw_flag = true;
 			break;
+
 		case 0x00EE://0x00EE Return from subroutine
+			stack_pointer--; //Dec stack pointer
+			program_counter = stack[stack_pointer]; //Set program counter to the value we pushed on the stack from call subroutine
 			break;
 		default:
 			opcodeError();
@@ -391,8 +400,30 @@ int Chip8Emulator::decodeOpcode()
 		registers[opcode & 0x0F00 >> 8] = (opcode & 0x00FF) & (rand()%0xFF);
 		break;
 	
-	//TODO------------------
+	//Understand wtf is happening here
 	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
+		unsigned short x = registers[opcode & 0x0F00 >> 8];
+		unsigned short y = registers[opcode & 0x00F0 >> 4];
+		unsigned short draw_height = opcode & 0x000F;
+		unsigned short draw_pixel;
+		
+		registers[0xF] = 0;
+		for(int y_line = 0; y_line < draw_height; y_line++)
+		{
+			draw_pixel = memory[index_register + y_line];
+			for(int x_line = 0; y_line < 8; y_line++)
+			{
+				if((draw_pixel & (0x80 >> x_line)) != 0)
+				{
+					if(graphics[(x + x_line + ((y + y_line)*64))] == 1)
+					{
+						registers[0xF] = 1;
+					}
+					graphics[x + x_line + ((y + y_line)*64)] ^= 1;
+				}
+			}
+		}
+		draw_flag = true;
 		break;
 
 	case 0xE000://0xE
@@ -420,8 +451,21 @@ int Chip8Emulator::decodeOpcode()
 		case 0x0007://0xFX07 Sets VX to the value of the delay timer.
 			registers[(opcode & 0x0F00) >> 8] = delay_timer;
 			break;
-		/*----------------------------TODO--------------------------------------------------------*/
+
 		case 0x000A://0xFX0A A key press is awaited, and then stored in VX.
+			bool key_pressed = false;
+			
+			for(int input_index; input_index < 16; input_index++)
+			{
+				if(input[input_index] != 0)
+				{
+					registers[(opcode & 0x0F00) >> 8] = input_index;
+					key_pressed = true;
+				}
+			}
+			//I think this is right?... not sure
+			if(!key_pressed)
+				program_counter -= 2;
 			break;
 
 		case 0x0015://0xFX15 Sets the delay timer to VX.
@@ -433,8 +477,11 @@ int Chip8Emulator::decodeOpcode()
 			break;
 
 		case 0x001E://0xFX1E Adds VX to I.
-			//TODO check for overflow..
 			index_register += registers[(opcode & 0x0F00) >> 8];
+			if (index_register + registers[(opcode & 0x0F00) >> 8] > 0xFFF) //VF =1 with overflow, 0 o.w.
+				registers[0xF]=1;
+			else
+				registers[0xF]=0;
 			break;
 		
 		case 0x0029://0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.

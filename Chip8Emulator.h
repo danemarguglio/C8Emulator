@@ -31,11 +31,9 @@ class Chip8Emulator
 
 	//2048 monochrome pixels
 	unsigned char graphics[64*32];
-
+	bool draw_flag;
 	//Input pad (8 bit)
 	unsigned char input[16];
-
-	//TODO font set
 
 	//Opcode errors
 	void opcodeError();
