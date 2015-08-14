@@ -402,6 +402,7 @@ int Chip8Emulator::decodeOpcode()
 	
 	//Understand wtf is happening here
 	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
+	{
 		unsigned short x = registers[opcode & 0x0F00 >> 8];
 		unsigned short y = registers[opcode & 0x00F0 >> 4];
 		unsigned short draw_height = opcode & 0x000F;
@@ -423,9 +424,10 @@ int Chip8Emulator::decodeOpcode()
 				}
 			}
 		}
+		
 		draw_flag = true;
 		break;
-
+	}
 	case 0xE000://0xE
 		switch(opcode & 0x00FF)
 		{
@@ -453,6 +455,7 @@ int Chip8Emulator::decodeOpcode()
 			break;
 
 		case 0x000A://0xFX0A A key press is awaited, and then stored in VX.
+		{
 			bool key_pressed = false;
 			
 			for(int input_index; input_index < 16; input_index++)
@@ -467,6 +470,7 @@ int Chip8Emulator::decodeOpcode()
 			if(!key_pressed)
 				program_counter -= 2;
 			break;
+		}
 
 		case 0x0015://0xFX15 Sets the delay timer to VX.
 			delay_timer = registers[(opcode & 0x0F00) >> 8];
@@ -526,3 +530,19 @@ int Chip8Emulator::decodeOpcode()
 	return 0;
 }
 
+void Chip8Emulator::debugGraphics()
+{
+	for (int y = 0; y < 32; y++)
+	{
+		for(int x = 0; x < 64; x++)
+		{
+			if(graphics[(y*64)+x] == 0)
+				std::cout << "X";
+			else
+				std::cout << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+	return;
+}

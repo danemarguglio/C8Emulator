@@ -68,6 +68,12 @@ public:
 
 	void test();
 
+	void debugGraphics();
+	bool get_draw(){
+		return draw_flag;
+	}
+	unsigned char get_pc(){return program_counter;}
+	unsigned short get_opcode(){return opcode;}
 
 };
 
