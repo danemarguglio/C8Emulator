@@ -12,8 +12,8 @@ class SDLGraphics
 	//Chip 8 is 64x32
 	static const int SCREEN_WIDTH = 640;
 	static const int SCREEN_HEIGHT = 480;
-	static const int screen_scale_x = 6;
-	static const int screen_scale_y = 6;
+	static const int screen_scale_x = 9;
+	static const int screen_scale_y = 9;
 	//SDL Window
 	SDL_Window* sdl_window;
 
@@ -40,6 +40,8 @@ public:
 	~SDLGraphics(void);
 
 	void drawScreen();
+	void handleInputDown();
+	void handleInputUp();
 
 	void eventLoop();
 };

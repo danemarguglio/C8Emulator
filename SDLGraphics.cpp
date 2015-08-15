@@ -3,7 +3,7 @@
 
 SDLGraphics::SDLGraphics(void)
 {
-	chip8emulator.loadProgram("C8Games\\pong");
+	chip8emulator.loadProgram("C8Games\\INVADERS");
 
 	//Setup game border
 	c8_border[0].x = 0; c8_border[0].y = 0; c8_border[0].w = screen_scale_x*65; c8_border[0].h = screen_scale_y; //Top
@@ -65,7 +65,8 @@ SDLGraphics::SDLGraphics(void)
 void SDLGraphics::drawScreen()
 {
 	//Clear renderer
-	SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x00, 0x00, 0xFF);
+	//SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
     SDL_RenderClear(sdl_renderer);
 
 	//Draw border
@@ -76,12 +77,13 @@ void SDLGraphics::drawScreen()
 	}
 
 	//Draw c8 pixels
-	SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x00, 0x00, 0xFF);
+	//SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x00, 0x00, 0xFF);
+	SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	for(int x = 0; x < 64; x++)
 	{
 		for(int y = 0; y < 32; y++)
 		{
-			if(!graphics[(y*64)+x])
+			if(graphics[(y*64)+x])
 			{
 				SDL_RenderFillRect(sdl_renderer, &c8_graphics[x][y]);
 			}
@@ -92,18 +94,149 @@ void SDLGraphics::drawScreen()
 	return;
 }
 
+void SDLGraphics::handleInputDown()
+{
+	switch(sdl_event.key.keysym.sym)
+	{
+		std::cout << "Hello";
+	case SDLK_1:
+		chip8emulator.setInputDown(0x1);
+		break;
+	case SDLK_2:
+		chip8emulator.setInputDown(0x2);
+		break;
+	case SDLK_3:
+		chip8emulator.setInputDown(0x3);
+		break;
+	case SDLK_4:
+		chip8emulator.setInputDown(0xC);
+		break;
+
+	case SDLK_q:
+		chip8emulator.setInputDown(0x4);
+		break;
+	case SDLK_w:
+		chip8emulator.setInputDown(0x5);
+		break;
+	case SDLK_e:
+		chip8emulator.setInputDown(0x6);
+		break;
+	case SDLK_r:
+		chip8emulator.setInputDown(0xD);
+		break;
+
+	case SDLK_a:
+		chip8emulator.setInputDown(0x7);
+		break;
+	case SDLK_s:
+		chip8emulator.setInputDown(0x8);
+		break;
+	case SDLK_d:
+		chip8emulator.setInputDown(0x9);
+		break;
+	case SDLK_f:
+		chip8emulator.setInputDown(0xE);
+		break;
+
+	case SDLK_z:
+		chip8emulator.setInputDown(0xA);
+		break;
+	case SDLK_x:
+		chip8emulator.setInputDown(0x0);
+		break;
+	case SDLK_c:
+		chip8emulator.setInputDown(0xB);
+		break;
+	case SDLK_v:
+		chip8emulator.setInputDown(0xF);
+		break;
+
+	default:
+		break;
+	}
+}
+void SDLGraphics::handleInputUp()
+{
+	switch(sdl_event.key.keysym.sym)
+	{
+		std::cout << "Hello";
+	case SDLK_1:
+		chip8emulator.setInputUp(0x1);
+		break;
+	case SDLK_2:
+		chip8emulator.setInputUp(0x2);
+		break;
+	case SDLK_3:
+		chip8emulator.setInputUp(0x3);
+		break;
+	case SDLK_4:
+		chip8emulator.setInputUp(0xC);
+		break;
+
+	case SDLK_q:
+		chip8emulator.setInputUp(0x4);
+		break;
+	case SDLK_w:
+		chip8emulator.setInputUp(0x5);
+		break;
+	case SDLK_e:
+		chip8emulator.setInputUp(0x6);
+		break;
+	case SDLK_r:
+		chip8emulator.setInputUp(0xD);
+		break;
+
+	case SDLK_a:
+		chip8emulator.setInputUp(0x7);
+		break;
+	case SDLK_s:
+		chip8emulator.setInputUp(0x8);
+		break;
+	case SDLK_d:
+		chip8emulator.setInputUp(0x9);
+		break;
+	case SDLK_f:
+		chip8emulator.setInputUp(0xE);
+		break;
+
+	case SDLK_z:
+		chip8emulator.setInputUp(0xA);
+		break;
+	case SDLK_x:
+		chip8emulator.setInputUp(0x0);
+		break;
+	case SDLK_c:
+		chip8emulator.setInputUp(0xB);
+		break;
+	case SDLK_v:
+		chip8emulator.setInputUp(0xF);
+		break;
+
+	default:
+		break;
+	}
+}
+
 
 void SDLGraphics::eventLoop()
 {
 	while(!quit)
 	{
-		int x = 0;
 		while( SDL_PollEvent(&sdl_event) != 0 )
 		{
 			if(sdl_event.type == SDL_QUIT)
 			{
 				quit = true;
 			}
+			else if(sdl_event.type == SDL_KEYUP)
+			{
+				handleInputUp();
+			}
+			else if(sdl_event.type == SDL_KEYDOWN)
+			{
+				handleInputDown();
+			}
+			
 		}
 
 		chip8emulator.cycleCPU();

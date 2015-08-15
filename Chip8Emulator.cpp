@@ -369,13 +369,14 @@ void Chip8Emulator::wait_for_key(){
     {
         if(input[input_index] != 0)
         {
+			std::cout << "Key Pressed";
             registers[nibble(2,opcode)] = input_index;
             key_pressed = true;
         }
     }
     //I think this is right?... not sure
     if(!key_pressed)
-        program_counter -= 2;
+		program_counter -= 2;
 }
 
 //0xANNN Sets I to the address NNN.
@@ -456,7 +457,8 @@ int Chip8Emulator::decodeOpcode()
     // 1111 0000 0000 0000   0xF000
     // ABCD 0000 0000 0000   &
 
-    increment_pc();
+	bool pc_jumped = false;
+    //increment_pc(); 
 
     //Check first nibble :)
     switch(opcode & 0xF000)
@@ -478,10 +480,12 @@ int Chip8Emulator::decodeOpcode()
 
     case 0x1000://0x1NNN Jump to address NNN.
         jump();
+		pc_jumped = true;
         break;
 
     case 0x2000://0x2NNN Call subroutine at NNN.
         subr_call();
+		pc_jumped=true;
         break;
 
     case 0x3000://0x3XNN Skips the next instruction if VX equals NN.
@@ -562,6 +566,7 @@ int Chip8Emulator::decodeOpcode()
 
 	case 0xB000://0xBNNN Jumps to the address NNN plus V0.
         jump_offset();
+		pc_jumped = true;
 		break;
 
 	case 0xC000://0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
@@ -638,11 +643,23 @@ int Chip8Emulator::decodeOpcode()
 		opcodeError();
 		break;
 	}
+	if (!pc_jumped)
+		increment_pc();
 
 	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;
 }
 
+void Chip8Emulator::setInputDown(int index)
+{
+	input[index]=1;
+	return;
+}
+void Chip8Emulator::setInputUp(int index)
+{
+	input[index]=0;
+	return;
+}
 unsigned char * Chip8Emulator::getGraphics(){
 	unsigned char *gfx= new unsigned char[64*32];
 	memcpy(gfx, &graphics, sizeof(unsigned char[64*32]));

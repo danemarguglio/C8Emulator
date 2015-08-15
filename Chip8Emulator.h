@@ -104,6 +104,8 @@ public:
 	void test();
 
 	void debugGraphics();
+	void setInputDown(int index);
+	void setInputUp(int index);
 	bool get_draw(){
 		return draw_flag;
 	}
