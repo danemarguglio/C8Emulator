@@ -109,6 +109,7 @@ public:
 	}
 	unsigned char get_pc(){return program_counter;}
 	unsigned short get_opcode(){return opcode;}
+	unsigned char* getGraphics();
 
 };
 

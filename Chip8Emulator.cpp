@@ -643,6 +643,12 @@ int Chip8Emulator::decodeOpcode()
 	return 0;
 }
 
+unsigned char * Chip8Emulator::getGraphics(){
+	unsigned char *gfx= new unsigned char[64*32];
+	memcpy(gfx, &graphics, sizeof(unsigned char[64*32]));
+	return gfx;
+}
+
 void Chip8Emulator::debugGraphics()
 {
     std::cout << "+";

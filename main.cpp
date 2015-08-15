@@ -1,4 +1,3 @@
-#include "Chip8Emulator.h"
 #include <Windows.h>
 #include "SDLGraphics.h"
 
