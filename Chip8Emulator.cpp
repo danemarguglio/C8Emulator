@@ -191,12 +191,16 @@ void Chip8Emulator::reg_to_const(){
 void Chip8Emulator::memory_from_regs(){
     for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
         memory[index_register + register_counter] = registers[register_counter];
+
+	index_register += ((opcode & 0x0F00) >> 8) + 1;
 }
 
 //0xFX65 Fills V0 to VX with values from memory starting at address I.
 void Chip8Emulator::regs_from_memory(){
     for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
         registers[register_counter] = memory[index_register + register_counter];
+
+	index_register += ((opcode & 0x0F00) >> 8) + 1;
 }
 
 //0xFX07 Sets VX to the value of the delay timer.
@@ -281,10 +285,16 @@ void Chip8Emulator::reg_shift_rt(){
 // VX = VX << 1
 // VF = left of VX
 void Chip8Emulator::reg_shift_lt(){
+	
     unsigned char x = nibble(2,opcode);
-    registers[0xf] = (registers[x] & 0x80);
+    registers[0xF] = (registers[x] & 0x80);
     registers[x] = registers[x] << 1;
-}
+	
+	/*
+	registers[0xF] = registers[opcode&0x0F00 >> 8] >> 7;
+	registers[(opcode&0x0F00)>>8]<<=1;
+	*/
+	}
 
 //Program_couter++
 void Chip8Emulator::increment_pc(){
@@ -351,13 +361,14 @@ void Chip8Emulator::skip_not_equal_reg(){
 
 //0xEX9E Skips the next instruction if the key stored in VX is pressed.
 void Chip8Emulator::skip_key_pressed(){
-    if(registers[nibble(2,opcode)] > 0)
+    if(input[registers[nibble(2,opcode)]] > 0)
         increment_pc();
 }
 
 //0xEXA1 Skips the next instruction if the key stored in VX isn't pressed.
 void Chip8Emulator::skip_key_not_pressed(){
-    if(registers[nibble(2,opcode)] == 0)
+	//Seems to be checking register 0 in pong/pong2..
+    if(input[registers[nibble(2,opcode)]] == 0)
         increment_pc();
 }
 
@@ -386,11 +397,11 @@ void Chip8Emulator::index_to_const(){
 
 //0xFX1E Adds VX to I.
 void Chip8Emulator::index_to_reg_add(){
-    index_register += registers[nibble(2,opcode)];
     if (index_register + registers[nibble(2,opcode)] > 0xFFF) //VF =1 with overflow, 0 o.w.
         registers[0xF]=1;
     else
         registers[0xF]=0;
+	index_register += registers[nibble(2,opcode)];
 }
 
 //0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
@@ -449,16 +460,14 @@ void Chip8Emulator::draw(){
         
     draw_flag = true;
 }
-
 //This is going to be the fun one!
 int Chip8Emulator::decodeOpcode()
 {
     // ABCD DEFG HIJK LMNO   opcode
     // 1111 0000 0000 0000   0xF000
     // ABCD 0000 0000 0000   &
-
 	bool pc_jumped = false;
-    //increment_pc(); 
+    increment_pc(); 
 
     //Check first nibble :)
     switch(opcode & 0xF000)
@@ -643,8 +652,9 @@ int Chip8Emulator::decodeOpcode()
 		opcodeError();
 		break;
 	}
-	if (!pc_jumped)
-		increment_pc();
+
+	//if (!pc_jumped)
+	//	increment_pc();
 
 	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;

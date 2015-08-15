@@ -88,7 +88,6 @@ class Chip8Emulator
 
 
 
-
 public:
 	Chip8Emulator(void);
 	~Chip8Emulator(void);
@@ -112,6 +111,7 @@ public:
 	unsigned char get_pc(){return program_counter;}
 	unsigned short get_opcode(){return opcode;}
 	unsigned char* getGraphics();
+	void setDrawFlag(bool flag){draw_flag=flag;}
 
 };
 

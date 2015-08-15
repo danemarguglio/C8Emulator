@@ -3,7 +3,7 @@
 
 SDLGraphics::SDLGraphics(void)
 {
-	chip8emulator.loadProgram("C8Games\\INVADERS");
+	chip8emulator.loadProgram("C8Games\\pong2");
 
 	//Setup game border
 	c8_border[0].x = 0; c8_border[0].y = 0; c8_border[0].w = screen_scale_x*65; c8_border[0].h = screen_scale_y; //Top
@@ -85,6 +85,7 @@ void SDLGraphics::drawScreen()
 		{
 			if(graphics[(y*64)+x])
 			{
+				//TODO make sure we draw stuff off screen..
 				SDL_RenderFillRect(sdl_renderer, &c8_graphics[x][y]);
 			}
 
@@ -159,7 +160,6 @@ void SDLGraphics::handleInputUp()
 {
 	switch(sdl_event.key.keysym.sym)
 	{
-		std::cout << "Hello";
 	case SDLK_1:
 		chip8emulator.setInputUp(0x1);
 		break;
@@ -236,7 +236,6 @@ void SDLGraphics::eventLoop()
 			{
 				handleInputDown();
 			}
-			
 		}
 
 		chip8emulator.cycleCPU();
@@ -245,6 +244,7 @@ void SDLGraphics::eventLoop()
 		{
 			graphics = chip8emulator.getGraphics();
 			drawScreen();
+			chip8emulator.setDrawFlag(false);
 		}
 
 		SDL_Delay(1);
