@@ -42,6 +42,13 @@ class Chip8Emulator
 	//control flow
 	void increment_pc();
 	void jump();
+	void jump_offset();
+	void subr_return();
+	void subr_call();
+	void skip_equal();
+	void skip_not_equal();
+	void skip_equal_reg();
+	void skip_not_equal_reg();
 
 	//Register manip
 	void reg_to_reg();
@@ -53,6 +60,32 @@ class Chip8Emulator
 	void reg_to_reg_sub_inv();
 	void reg_shift_rt();
 	void reg_shift_lt();
+
+	void reg_to_const();
+	void reg_to_delay();
+	void reg_to_rand();
+	void reg_to_const_add();
+	void index_to_const();
+	void index_to_reg_add();
+	void delay_to_reg();
+	void sound_to_reg();
+
+	void split_reg();
+
+	void memory_from_regs();
+	void regs_from_memory();
+
+	//INPUT
+	void wait_for_key();
+	void skip_key_pressed();
+	void skip_key_not_pressed();
+
+
+	//GRAPHICS
+	void index_to_reg_char();
+	void clear_screen();
+	void draw();
+
 
 
 public:
@@ -70,11 +103,15 @@ public:
 	void test();
 
 	void debugGraphics();
+	void setInputDown(int index);
+	void setInputUp(int index);
 	bool get_draw(){
 		return draw_flag;
 	}
 	unsigned char get_pc(){return program_counter;}
 	unsigned short get_opcode(){return opcode;}
+	unsigned char* getGraphics();
+	void setDrawFlag(bool flag){draw_flag=flag;}
 
 };
 

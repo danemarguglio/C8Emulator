@@ -1,8 +1,11 @@
-#include "Chip8Emulator.h"
 #include <Windows.h>
+#include "SDLGraphics.h"
 
 int main(int argc, char *argv[])
 {
+	SDLGraphics gfx;
+	gfx.eventLoop();
+	/*
 	using namespace std;
 	Chip8Emulator chip8emulator;
 	chip8emulator.loadProgram("C8Games\\tank");//hate windows
@@ -15,5 +18,6 @@ int main(int argc, char *argv[])
 			system("clear");
 		}
 	}
+	*/
 	return 0;
 }
