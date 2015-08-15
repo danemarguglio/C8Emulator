@@ -62,13 +62,29 @@ class Chip8Emulator
 	void reg_shift_lt();
 
 	void reg_to_const();
+	void reg_to_delay();
 	void reg_to_rand();
 	void reg_to_const_add();
 	void index_to_const();
+	void index_to_reg_add();
+	void delay_to_reg();
+	void sound_to_reg();
+
+	void split_reg();
+
+	void memory_from_regs();
+	void regs_from_memory();
+
+	//INPUT
+	void wait_for_key();
+	void skip_key_pressed();
+	void skip_key_not_pressed();
 
 
 	//GRAPHICS
+	void index_to_reg_char();
 	void clear_screen();
+	void draw();
 
 
 

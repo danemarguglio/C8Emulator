@@ -187,6 +187,23 @@ void Chip8Emulator::reg_to_const(){
     registers[nibble(2,opcode)] = opcode & 0x00FF;
 }
 
+//0xFX55 Stores V0 to VX in memory starting at address I.
+void Chip8Emulator::memory_from_regs(){
+    for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
+        memory[index_register + register_counter] = registers[register_counter];
+}
+
+//0xFX65 Fills V0 to VX with values from memory starting at address I.
+void Chip8Emulator::regs_from_memory(){
+    for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
+        registers[register_counter] = memory[index_register + register_counter];
+}
+
+//0xFX07 Sets VX to the value of the delay timer.
+void Chip8Emulator::reg_to_delay(){
+    registers[nibble(2,opcode)] = delay_timer;
+}
+
 //0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
 void Chip8Emulator::reg_to_rand(){
     registers[nibble(2,opcode)] = (opcode & 0x00FF) & (rand()%0xFF);
@@ -332,9 +349,104 @@ void Chip8Emulator::skip_not_equal_reg(){
         increment_pc();
 }
 
+//0xEX9E Skips the next instruction if the key stored in VX is pressed.
+void Chip8Emulator::skip_key_pressed(){
+    if(registers[nibble(2,opcode)] > 0)
+        increment_pc();
+}
+
+//0xEXA1 Skips the next instruction if the key stored in VX isn't pressed.
+void Chip8Emulator::skip_key_not_pressed(){
+    if(registers[nibble(2,opcode)] == 0)
+        increment_pc();
+}
+
+//0xFX0A A key press is awaited, and then stored in VX.
+void Chip8Emulator::wait_for_key(){
+    bool key_pressed = false;
+            
+    for(int input_index=0; input_index < 16; input_index++)
+    {
+        if(input[input_index] != 0)
+        {
+            registers[nibble(2,opcode)] = input_index;
+            key_pressed = true;
+        }
+    }
+    //I think this is right?... not sure
+    if(!key_pressed)
+        program_counter -= 2;
+}
+
 //0xANNN Sets I to the address NNN.
 void Chip8Emulator::index_to_const(){
     index_register = opcode & 0x0FFF;
+}
+
+//0xFX1E Adds VX to I.
+void Chip8Emulator::index_to_reg_add(){
+    index_register += registers[nibble(2,opcode)];
+    if (index_register + registers[nibble(2,opcode)] > 0xFFF) //VF =1 with overflow, 0 o.w.
+        registers[0xF]=1;
+    else
+        registers[0xF]=0;
+}
+
+//0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+void Chip8Emulator::index_to_reg_char(){
+    index_register = registers[nibble(2,opcode)]*0x5;
+}
+
+//0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
+void Chip8Emulator::split_reg(){
+    unsigned t = registers[nibble(2,opcode)];
+    memory[index_register+2] = t % 10;
+    t /= 10;
+    memory[index_register+1] = t % 10;
+    t /= 10;
+    memory[index_register] = t % 10;
+}
+
+//0xFX15 Sets the delay timer to VX.
+void Chip8Emulator::delay_to_reg(){
+    delay_timer = registers[nibble(2,opcode)];
+}
+
+//0xFX18 Sets the delay timer to VX.
+void Chip8Emulator::sound_to_reg(){
+    sound_timer = registers[nibble(2,opcode)];
+}
+
+
+// 0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. 
+// Wraps around the screen. 
+// If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. 
+// All drawing is XOR drawing (i.e. it toggles the screen pixels). 
+// Sprites are drawn starting at position VX, VY. 
+// N is the number of 8bit rows that need to be drawn. 
+// If N is greater than 1, second line continues at position VX, VY+1, and so on.
+void Chip8Emulator::draw(){
+    unsigned short x = registers[nibble(2,opcode)];
+    unsigned short y = registers[nibble(1,opcode)];
+    unsigned short draw_height = nibble(0,opcode);
+    unsigned char draw_pixel;
+    
+    registers[0xF] = 0;
+    for(int y_line = 0; y_line < draw_height; y_line++)
+    {
+        draw_pixel = memory[index_register + y_line];
+        for(int x_line = 0; x_line < 8; x_line++)
+        {
+            unsigned char pixel = (draw_pixel & (0x80 >> x_line)) >> (7 - x_line);
+            unsigned char graph1 = graphics[x + x_line + ((y + y_line)*64)];
+            graphics[x + x_line + ((y + y_line)*64)] ^= pixel;
+            unsigned char graph2 = graphics[x + x_line + ((y + y_line)*64)];
+            if(graph1 && !graph2)
+                registers[0xF] = 1;
+        }
+    }
+        
+    draw_flag = true;
 }
 
 //This is going to be the fun one!
@@ -343,8 +455,6 @@ int Chip8Emulator::decodeOpcode()
     // ABCD DEFG HIJK LMNO   opcode
     // 1111 0000 0000 0000   0xF000
     // ABCD 0000 0000 0000   &
-
-    unsigned char t;
 
     increment_pc();
 
@@ -460,51 +570,18 @@ int Chip8Emulator::decodeOpcode()
 	
 	//Understand wtf is happening here
 	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
-	{
-		unsigned short x = registers[nibble(2,opcode)];
-		unsigned short y = registers[nibble(1,opcode)];
-		unsigned short draw_height = nibble(0,opcode);
-		unsigned char draw_pixel;
-		
-		registers[0xF] = 0;
-		for(int y_line = 0; y_line < draw_height; y_line++)
-		{
-			draw_pixel = memory[index_register + y_line];
-			for(int x_line = 0; x_line < 8; x_line++)
-			{
-                unsigned char pixel = (draw_pixel & (0x80 >> x_line)) >> (7 - x_line);
-                unsigned char graph1 = graphics[x + x_line + ((y + y_line)*64)];
-                graphics[x + x_line + ((y + y_line)*64)] ^= pixel;
-                unsigned char graph2 = graphics[x + x_line + ((y + y_line)*64)];
-                if(graph1 && !graph2)
-                    registers[0xF] = 1;
-                
-                // if((draw_pixel & (0x8 >> x_line)) != 0)
-                // {
-                //  if(graphics[(x + x_line + ((y + y_line)*64))] == 1)
-                //  {
-                //      registers[0xF] = 1;
-                //  }
-                //  graphics[x + x_line + ((y + y_line)*64)] ^= 1;
-				// }
-			}
-		}
-		
-		draw_flag = true;
+		draw();
 		break;
-	}
 	case 0xE000://0xE
 		switch(opcode & 0x00FF)
 		{
 			//Im guessing V[x] > 0 pressed, V[x] = 0 not pressed
 		case 0x009E://0xEX9E Skips the next instruction if the key stored in VX is pressed.
-			if(registers[nibble(2,opcode)] > 0)
-				increment_pc();
+			skip_key_pressed();
 			break;
 
 		case 0x00A1://0xEXA1 Skips the next instruction if the key stored in VX isn't pressed.
-			if(registers[nibble(2,opcode)] == 0)
-				increment_pc();
+			skip_key_not_pressed();
 			break;
 		default:
 			opcodeError();
@@ -516,72 +593,39 @@ int Chip8Emulator::decodeOpcode()
 		switch(opcode & 0x00FF)
 		{
 		case 0x0007://0xFX07 Sets VX to the value of the delay timer.
-			registers[nibble(2,opcode)] = delay_timer;
-			break;
+			reg_to_delay();
+            break;
 
 		case 0x000A://0xFX0A A key press is awaited, and then stored in VX.
-		{
-			bool key_pressed = false;
-			
-			for(int input_index=0; input_index < 16; input_index++)
-			{
-				if(input[input_index] != 0)
-				{
-					registers[nibble(2,opcode)] = input_index;
-					key_pressed = true;
-				}
-			}
-			//I think this is right?... not sure
-			if(!key_pressed)
-				program_counter -= 2;
+			wait_for_key();
 			break;
-		}
 
 		case 0x0015://0xFX15 Sets the delay timer to VX.
-			delay_timer = registers[nibble(2,opcode)];
+            delay_to_reg();
 			break;
 
 		case 0x0018://0xFX18 Sets the sound timer to VX.
-			sound_timer = registers[nibble(2,opcode)];
+			sound_to_reg();
 			break;
 
 		case 0x001E://0xFX1E Adds VX to I.
-			index_register += registers[nibble(2,opcode)];
-			if (index_register + registers[nibble(2,opcode)] > 0xFFF) //VF =1 with overflow, 0 o.w.
-				registers[0xF]=1;
-			else
-				registers[0xF]=0;
+			index_to_reg_add();
 			break;
 		
 		case 0x0029://0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
-			index_register = registers[nibble(2,opcode)]*0x5;
+            index_to_reg_char();
 			break;
 
 		case 0x0033://0xFX33 Stores the Binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.)
-			//stole this too
-            t = registers[nibble(2,opcode)];
-            memory[index_register+2] = t % 10;
-            t /= 10;
-            memory[index_register+1] = t % 10;
-            t /= 10;
-            memory[index_register] = t % 10;
-			// memory[index_register]   = registers[nibble(2,opcode)]/100;
-			// memory[index_register+1] = (registers[nibble(2,opcode)]/ 10) %10;
-			// memory[index_register+2] = (registers[nibble(2,opcode)]%100) %10;	
+            split_reg();	
 			break;
 
 		case 0x0055://0xFX55 Stores V0 to VX in memory starting at address I.
-			for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
-				memory[index_register + register_counter] = registers[register_counter];
-			//I = I + X + 1.
-			index_register += (nibble(2,opcode)) + 1;
+			memory_from_regs();
 			break;
 
 		case 0x0065://0xFX65 Fills V0 to VX with values from memory starting at address I.
-			for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
-				registers[register_counter] = memory[index_register + register_counter];
-			//I = I + X + 1.
-			// index_register += (nibble(2,opcode)) + 1;
+            regs_from_memory();
 			break;
 		default:
 			opcodeError();
@@ -594,8 +638,6 @@ int Chip8Emulator::decodeOpcode()
 		opcodeError();
 		break;
 	}
-
-
 
 	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;
@@ -619,11 +661,11 @@ void Chip8Emulator::debugGraphics()
 		}
 		std::cout << "|" << std::endl;
 	}
-	std::cout << std::endl;
+	// std::cout << std::endl;
     std::cout << "+";
     for(int i=0;i<64;i++)
         std::cout << "-";
-    std::cout << "+" << std::endl;
+    std::cout << "+\n" << std::endl;
     draw_flag = false;
     //system("clear");
 	return;
