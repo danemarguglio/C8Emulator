@@ -197,10 +197,10 @@ void Chip8Emulator::memory_from_regs(){
 
 //0xFX65 Fills V0 to VX with values from memory starting at address I.
 void Chip8Emulator::regs_from_memory(){
-    for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
+    for(int register_counter = 0; register_counter < (nibble(2,opcode)) + 1; register_counter++)
         registers[register_counter] = memory[index_register + register_counter];
 
-	index_register += ((opcode & 0x0F00) >> 8) + 1;
+	//index_register += ((opcode & 0x0F00) >> 8) + 1;
 }
 
 //0xFX07 Sets VX to the value of the delay timer.
