@@ -1,6 +1,9 @@
 #include <Windows.h>
 #include "SDLGraphics.h"
 
+#ifdef main
+	#undef main
+#endif
 int main(int argc, char *argv[])
 {
 	SDLGraphics gfx;

@@ -138,7 +138,7 @@ int Chip8Emulator::loadProgram(const char* file_name)
     }
     else
     {
-        cout <<"FNF\n";
+        cout << "FNF: " << file_name << endl;
         return -1;
     }
 }

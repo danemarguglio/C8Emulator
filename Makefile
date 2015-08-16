@@ -1,19 +1,22 @@
 CC=g++
-CFLAGS=-c -Wall
-LDFLAGS=
-SOURCES=main.cpp Chip8Emulator.cpp
+CFLAGS=-c -Wall `sdl2-config --cflags`
+LDFLAGS=`sdl2-config --libs`
+SOURCES=main.cpp Chip8Emulator.cpp SDLGraphics.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=Chip8
 
 all: $(SOURCES) $(EXECUTABLE)
     
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
-main.o: main.cpp
+main.o: main.cpp Chip8Emulator.h SDLGraphics.h
 	$(CC) $(CFLAGS) $< -o $@
 
-Chip8Emulator.o: Chip8Emulator.cpp Chip8Emulator.h
+Chip8Emulator.o: Chip8Emulator.cpp chip8emulator.h
+	$(CC) $(CFLAGS) $< -o $@
+
+SDLGraphics.o: SDLGraphics.cpp SDLGraphics.h
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:

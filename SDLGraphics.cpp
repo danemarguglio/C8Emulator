@@ -3,7 +3,7 @@
 
 SDLGraphics::SDLGraphics(void)
 {
-	chip8emulator.loadProgram("C8Games\\pong2");
+	chip8emulator.loadProgram("C8Games\\PONG");
 
 	//Setup game border
 	c8_border[0].x = 0; c8_border[0].y = 0; c8_border[0].w = screen_scale_x*65; c8_border[0].h = screen_scale_y; //Top
@@ -37,6 +37,7 @@ SDLGraphics::SDLGraphics(void)
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         sdl_error = SDL_GetError();
+        std::cout << "Error Init " << sdl_error << std::endl;
     }
     else
     {
