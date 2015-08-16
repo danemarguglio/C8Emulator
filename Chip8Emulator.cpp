@@ -189,10 +189,10 @@ void Chip8Emulator::reg_to_const(){
 
 //0xFX55 Stores V0 to VX in memory starting at address I.
 void Chip8Emulator::memory_from_regs(){
-    for(int register_counter = 0; register_counter < (nibble(2,opcode)); register_counter++)
+    for(int register_counter = 0; register_counter < (nibble(2,opcode)) + 1; register_counter++)
         memory[index_register + register_counter] = registers[register_counter];
 
-	index_register += ((opcode & 0x0F00) >> 8) + 1;
+	//index_register += ((opcode & 0x0F00) >> 8) + 1;
 }
 
 //0xFX65 Fills V0 to VX with values from memory starting at address I.
