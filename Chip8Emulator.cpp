@@ -380,7 +380,6 @@ void Chip8Emulator::wait_for_key(){
     {
         if(input[input_index] != 0)
         {
-			std::cout << "Key Pressed";
             registers[nibble(2,opcode)] = input_index;
             key_pressed = true;
         }

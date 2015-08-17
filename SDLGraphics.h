@@ -17,6 +17,10 @@ class SDLGraphics
 	//SDL Window
 	SDL_Window* sdl_window;
 
+	//Window Titles
+	const char* window_title_unpaused;
+	const char* window_title_paused;
+
 	//SDL Renderer
 	SDL_Renderer* sdl_renderer;
 
@@ -26,6 +30,9 @@ class SDLGraphics
 	//Quit event loop
 	bool quit;
 
+	//Pause c8 processor
+	bool c8_paused;
+
 	//copied from chip8 emulator
 	unsigned char *graphics;
 	//Rectangles for drawing gfx
@@ -34,7 +41,7 @@ class SDLGraphics
 
 
 	const char* sdl_error;
-
+	void pauseEmulation();
 public:
 	SDLGraphics(void);
 	~SDLGraphics(void);

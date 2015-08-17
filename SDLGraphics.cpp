@@ -3,7 +3,14 @@
 
 SDLGraphics::SDLGraphics(void)
 {
-	chip8emulator.loadProgram("C8Games\\PONG");
+	chip8emulator.loadProgram("C8Games\\PONG2");
+
+	//Window Titles
+	window_title_unpaused = "Chip-8 Emulator";
+	window_title_paused = "Chip-8 Emulator  **PAUSED**";
+
+	//Unpause c8 emulator
+	c8_paused = false;
 
 	//Setup game border
 	c8_border[0].x = 0; c8_border[0].y = 0; c8_border[0].w = screen_scale_x*65; c8_border[0].h = screen_scale_y; //Top
@@ -42,7 +49,7 @@ SDLGraphics::SDLGraphics(void)
     else
     {
         //Create window
-        sdl_window = SDL_CreateWindow("Chip-8 Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		sdl_window = SDL_CreateWindow(window_title_unpaused, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
 
         if(sdl_window == NULL)
         {
@@ -96,11 +103,30 @@ void SDLGraphics::drawScreen()
 	return;
 }
 
+void SDLGraphics::pauseEmulation()
+{
+	if (!c8_paused)
+		{
+			SDL_SetWindowTitle(sdl_window,window_title_paused);
+			c8_paused = true;
+		}
+		else
+		{
+			SDL_SetWindowTitle(sdl_window,window_title_unpaused);
+			c8_paused = false;
+		}
+}
+
 void SDLGraphics::handleInputDown()
 {
 	switch(sdl_event.key.keysym.sym)
 	{
-		std::cout << "Hello";
+	//Pause emulation
+	case SDLK_SPACE:
+		pauseEmulation();
+		break;
+
+	//Controls
 	case SDLK_1:
 		chip8emulator.setInputDown(0x1);
 		break;
@@ -239,13 +265,16 @@ void SDLGraphics::eventLoop()
 			}
 		}
 
-		chip8emulator.cycleCPU();
-
-		if (chip8emulator.get_draw())
+		if(!c8_paused)
 		{
-			graphics = chip8emulator.getGraphics();
-			drawScreen();
-			chip8emulator.setDrawFlag(false);
+			chip8emulator.cycleCPU();
+
+			if (chip8emulator.get_draw())
+			{
+				graphics = chip8emulator.getGraphics();
+				drawScreen();
+				chip8emulator.setDrawFlag(false);
+			}
 		}
 
 		SDL_Delay(1);
