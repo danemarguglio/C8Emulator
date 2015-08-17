@@ -7,44 +7,29 @@
 #define nibble(index,num) ((num & (0x000F << 4*index)) >> (4*index))
 
 
-void Chip8Emulator::test(){
-    using namespace std;
-    registers[0] = 0xFF;
-    registers[1] = 0xFF;
-
-    opcode = 0x8014;
-
-    reg_to_reg_add();
-
-    cout << (int)registers[0] << " " << (int)registers[1] << " " << (int)((registers[15] << 8) + registers[0]) << endl;
-}
 
 Chip8Emulator::Chip8Emulator(void)
 {
-    /*
-        I know 0x00 and 0x000 are the same as 0.. but it helps me keep track of their sizes :(
-    */
     //We need random numbers
-    srand (time(NULL));
+    srand((unsigned int)time(NULL));
 
     //Clear memory
-    for(int memory_index = 0; memory_index < 4096; memory_index++)
+    for(int memory_index = 0; memory_index < MEMORYSIZE; memory_index++)
     {
         memory[memory_index] = 0;
     }
 
     //Clear stack
-    for(int stack_index = 0; stack_index < 16; stack_index++)
+    for(int stack_index = 0; stack_index < STACKSIZE; stack_index++)
     {
         stack[stack_index] = 0x0000;
     }
 
     //Clear registers
-    for(int register_index = 0; register_index < 16; register_index++)
+    for(int register_index = 0; register_index < REGISTERSIZE; register_index++)
     {
         registers[register_index] = 0x00;
     }
-
 
     //Usually applications are loaded starting at memory location 512 (0x200)
     program_counter = 0x200;
@@ -63,19 +48,19 @@ Chip8Emulator::Chip8Emulator(void)
     delay_timer = 0x00;
 
     //Clear input
-    for(int input_index = 0; input_index < 16; input_index++)
+    for(int input_index = 0; input_index < INPUTSIZE; input_index++)
     {
         input[input_index] = 0x00;
     }
 
     //Clear display
-    for(int graphics_index = 0; graphics_index< 64*32; graphics_index++)
+	for(int graphics_index = 0; graphics_index< XGFXSIZE*YGFXSIZE; graphics_index++)
     {
         graphics[graphics_index] = 0x00;
     }
     draw_flag = false;
 
-    //Font set (i stole this )
+    //Chip-8 Font set
     unsigned char fontset[80] =
     { 
     0xF0, 0x90, 0x90, 0x90, 0xF0, //0
@@ -118,27 +103,30 @@ int Chip8Emulator::loadProgram(const char* file_name)
     {
         cout << "Opened file " << file_name << endl;
         streampos file_size = open_file.tellg();
-        size = open_file.tellg();
-        char * file_in_memory = new char [file_size];
+        size = (int)open_file.tellg();
+        char * file_in_memory = new char [(int)file_size];
         //Go to beginning of file
         open_file.seekg (0, ios::beg);
         //Store file in memory
         open_file.read (file_in_memory, file_size);
         open_file.close();
 
-        cout << "File Size: " << file_size << endl;
+        cout << "File Size: " << file_size << " bytes" << endl;
         //TODO check if file meets our critera for openin!
 
         //Put file in Chip-8 memory starting at 0x200
         memcpy ( &(memory[0x200]) , file_in_memory, size);
         delete[] file_in_memory;
+
+		/*
         for(int i=0;i<size;i+=2)
             printf("[%x] : %x\n", 0x200 + i, (memory[0x200+i] << 8) | memory[0x200 + i + 1]);
         return 0;
+		*/
     }
     else
     {
-        cout << "FNF: " << file_name << endl;
+        cout << "File not found: " << file_name << endl;
         return -1;
     }
 }
@@ -157,7 +145,6 @@ void Chip8Emulator::cycleCPU()
     fetchOpcode();
 	decodeOpcode();
 	updateTimers();
-	//TODO Render graphics
 	return;
 }
 
@@ -174,9 +161,11 @@ void Chip8Emulator::updateTimers()
 		sound_timer--;
     }
 }
+
 //Report opcode errors
 void Chip8Emulator::opcodeError()
 {
+	std::cout << "Invalid Opcode: " << (int)opcode << std::endl;
     return;
 }
 
@@ -312,7 +301,7 @@ void Chip8Emulator::jump_offset(){
 }
 
 void Chip8Emulator::clear_screen(){
-    for(int graphics_index = 0; graphics_index < 64*32; graphics_index++)
+	for(int graphics_index = 0; graphics_index < XGFXSIZE*YGFXSIZE; graphics_index++)
         graphics[graphics_index] = 0x0;
     draw_flag = true;
 }
@@ -324,8 +313,8 @@ void Chip8Emulator::subr_return(){
 
 void Chip8Emulator::subr_call(){
     stack[stack_pointer] = program_counter; //Store program counter on the stack
-    //prevent stack overflow
-    if(stack_pointer < 16)
+    //Prevent writing to out of bounds on stack
+    if(stack_pointer < STACKSIZE)
     {
         program_counter = opcode & 0x0FFF;//Same as above opcode
         stack_pointer++;
@@ -376,7 +365,7 @@ void Chip8Emulator::skip_key_not_pressed(){
 void Chip8Emulator::wait_for_key(){
     bool key_pressed = false;
             
-    for(int input_index=0; input_index < 16; input_index++)
+    for(int input_index=0; input_index < INPUTSIZE; input_index++)
     {
         if(input[input_index] != 0)
         {
@@ -384,7 +373,7 @@ void Chip8Emulator::wait_for_key(){
             key_pressed = true;
         }
     }
-    //I think this is right?... not sure
+	//Since we already incremented pc at the start, undo that
     if(!key_pressed)
 		program_counter -= 2;
 }
@@ -459,16 +448,15 @@ void Chip8Emulator::draw(){
         
     draw_flag = true;
 }
-//This is going to be the fun one!
+
 int Chip8Emulator::decodeOpcode()
 {
     // ABCD DEFG HIJK LMNO   opcode
     // 1111 0000 0000 0000   0xF000
     // ABCD 0000 0000 0000   &
-	bool pc_jumped = false;
     increment_pc(); 
 
-    //Check first nibble :)
+    //Check first nibble
     switch(opcode & 0xF000)
     {
     case 0x0000://First byte 0x00
@@ -488,12 +476,10 @@ int Chip8Emulator::decodeOpcode()
 
     case 0x1000://0x1NNN Jump to address NNN.
         jump();
-		pc_jumped = true;
         break;
 
     case 0x2000://0x2NNN Call subroutine at NNN.
         subr_call();
-		pc_jumped=true;
         break;
 
     case 0x3000://0x3XNN Skips the next instruction if VX equals NN.
@@ -574,17 +560,16 @@ int Chip8Emulator::decodeOpcode()
 
 	case 0xB000://0xBNNN Jumps to the address NNN plus V0.
         jump_offset();
-		pc_jumped = true;
 		break;
 
 	case 0xC000://0xCXNN Sets VX to the result of a bitwise and operation on a random number and NN.
         reg_to_rand();
 		break;
 	
-	//Understand wtf is happening here
 	case 0xD000://0xDXYN Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen. If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero. All drawing is XOR drawing (i.e. it toggles the screen pixels). Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn. If N is greater than 1, second line continues at position VX, VY+1, and so on.
 		draw();
 		break;
+
 	case 0xE000://0xE
 		switch(opcode & 0x00FF)
 		{
@@ -646,47 +631,48 @@ int Chip8Emulator::decodeOpcode()
 		}
 		break;
 
-
 	default:
 		opcodeError();
 		break;
 	}
 
-	//if (!pc_jumped)
-	//	increment_pc();
-
-	//lets return -1 or something for invalid opcodes and halt exectuion
 	return 0;
 }
 
+//Tell chip-8 that the key was pressed down
 void Chip8Emulator::setInputDown(int index)
 {
 	input[index]=1;
 	return;
 }
+
+//Tell chip-8 that the key was let go of
 void Chip8Emulator::setInputUp(int index)
 {
 	input[index]=0;
 	return;
 }
+
+//Returns a copy of the graphics array
 unsigned char * Chip8Emulator::getGraphics(){
-	unsigned char *gfx= new unsigned char[64*32];
-	memcpy(gfx, &graphics, sizeof(unsigned char[64*32]));
+	unsigned char *gfx= new unsigned char[XGFXSIZE*YGFXSIZE];
+	memcpy(gfx, &graphics, sizeof(unsigned char[XGFXSIZE*YGFXSIZE]));
 	return gfx;
 }
 
+//Old text based grapics
 void Chip8Emulator::debugGraphics()
 {
     std::cout << "+";
     for(int i=0;i<64;i++)
         std::cout << "-";
     std::cout << "+" << std::endl;
-	for (int y = 0; y < 32; y++)
+	for (int y = 0; y < YGFXSIZE; y++)
 	{
         std::cout << "|";
-		for(int x = 0; x < 64; x++)
+		for(int x = 0; x < XGFXSIZE; x++)
 		{
-			if(graphics[(y*64)+x])
+			if(graphics[(y*XGFXSIZE)+x])
 				std::cout << "X";
 			else
 				std::cout << " ";
@@ -695,7 +681,7 @@ void Chip8Emulator::debugGraphics()
 	}
 	// std::cout << std::endl;
     std::cout << "+";
-    for(int i=0;i<64;i++)
+	for(int i=0;i<XGFXSIZE;i++)
         std::cout << "-";
     std::cout << "+\n" << std::endl;
     draw_flag = false;

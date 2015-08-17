@@ -68,6 +68,8 @@ SDLGraphics::SDLGraphics(void)
 			}
 		}
 	}
+
+
 }
 
 void SDLGraphics::drawScreen()

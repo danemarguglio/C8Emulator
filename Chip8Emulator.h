@@ -8,10 +8,12 @@
 class Chip8Emulator
 {
 	//Most systems CHIP-8 was implemented on had 4096 memory locations (all 8 bits)
-	unsigned char memory[4096];
+	static const int MEMORYSIZE = 4096;
+	unsigned char memory[MEMORYSIZE];
 
 	//Modern C8 use 16 level stack
-	unsigned short stack[16];
+	static const int STACKSIZE = 16;
+	unsigned short stack[STACKSIZE];
 
 	//Keep track of where we are on the stack
 	unsigned short stack_pointer;
@@ -20,7 +22,8 @@ class Chip8Emulator
 	unsigned short opcode;
 
 	//16 eight bit registers
-	unsigned char registers[16];
+	static const int REGISTERSIZE = 16;
+	unsigned char registers[REGISTERSIZE];
 
 	//Address register
 	unsigned int index_register;
@@ -31,10 +34,14 @@ class Chip8Emulator
 	unsigned char delay_timer;
 
 	//2048 monochrome pixels
-	unsigned char graphics[64*32];
+	static const int XGFXSIZE = 64;
+	static const int YGFXSIZE = 32;
+	unsigned char graphics[XGFXSIZE*YGFXSIZE];
 	bool draw_flag;
+
 	//Input pad (8 bit)
-	unsigned char input[16];
+	static const int INPUTSIZE = 16;
+	unsigned char input[INPUTSIZE];
 
 	//Opcode errors
 	void opcodeError();
@@ -86,32 +93,39 @@ class Chip8Emulator
 	void clear_screen();
 	void draw();
 
-
-
 public:
 	Chip8Emulator(void);
 	~Chip8Emulator(void);
-
-	void cycleCPU();
-
-	void fetchOpcode();
-	int decodeOpcode();
-	void updateTimers();
-
+	
+	//Loads binary file into memory
 	int loadProgram(const char*);
 
-	void test();
+	//Performs one CPU cycle
+	void cycleCPU();
 
+	//Gets the opcode from memory at program counter location
+	void fetchOpcode();
+
+	//Performs deciphers and performs the opcode
+	int decodeOpcode();
+
+	//Update sound and delay timers
+	void updateTimers();
+
+	//Old text graphics
 	void debugGraphics();
+
+	//Used to set input values
 	void setInputDown(int index);
 	void setInputUp(int index);
-	bool get_draw(){
-		return draw_flag;
-	}
+
+	bool get_draw(){return draw_flag;}
 	unsigned char get_pc(){return program_counter;}
 	unsigned short get_opcode(){return opcode;}
-	unsigned char* getGraphics();
 	void setDrawFlag(bool flag){draw_flag=flag;}
+
+	//Returns graphics array
+	unsigned char* getGraphics();
 
 };
 

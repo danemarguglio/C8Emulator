@@ -14,6 +14,7 @@ class SDLGraphics
 	static const int SCREEN_HEIGHT = 480;
 	static const int screen_scale_x = 9;
 	static const int screen_scale_y = 9;
+
 	//SDL Window
 	SDL_Window* sdl_window;
 
@@ -35,21 +36,20 @@ class SDLGraphics
 
 	//copied from chip8 emulator
 	unsigned char *graphics;
-	//Rectangles for drawing gfx
+
+	//Rectangles for drawing gfx & border
 	SDL_Rect c8_graphics[64][32];
 	SDL_Rect c8_border[4];
 
-
 	const char* sdl_error;
 	void pauseEmulation();
-public:
-	SDLGraphics(void);
-	~SDLGraphics(void);
-
 	void drawScreen();
 	void handleInputDown();
 	void handleInputUp();
 
+public:
+	SDLGraphics(void);
+	~SDLGraphics(void);
 	void eventLoop();
 };
 
