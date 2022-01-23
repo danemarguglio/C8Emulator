@@ -4,6 +4,13 @@ Simple Chip-8 emulator written in C++. Uses [SDL2](https://www.libsdl.org/) to r
 Written by [Dane Marguglio](https://github.com/danemarguglio) & [Joel Willoughby](https://github.com/JoelWilloughby) circa 2015.
 
 
+![Pong](img/pong.png "Pong")
+
+![Opcode-Test](img/opcode_test.png "Opcode-test")
+
+
+
+
 If you'd like to take an in-depth walkthrough of a CHIP-8 binary, take a look at [Pong Explained](Pong_Explained.md).
 
 
@@ -28,5 +35,8 @@ Compile the code using the `make` command.
 ./Chip8 C8Games/PONG
 ./Chip8 C8Games/CONNECT4
 ```
-### Controls
-//TODO
+
+### Control
+TODO
+- 1, 2, 3, 4, q, w, e, r
+- a, s, d, f, z, x, c, v

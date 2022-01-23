@@ -33,8 +33,8 @@ SDLGraphics::SDLGraphics(std::string binary_path)
 	{
 		for(int y = 0; y < 32; y++)
 		{
-			c8_graphics[x][y].x = (x+1)*screen_scale_x; //+1 accounts for border
-			c8_graphics[x][y].y = (y+1)*screen_scale_y;
+			c8_graphics[x][y].x = x * screen_scale_x;
+			c8_graphics[x][y].y = y * screen_scale_y;
 			c8_graphics[x][y].w = screen_scale_x;
 			c8_graphics[x][y].h = screen_scale_x;
 		}
@@ -86,11 +86,12 @@ void SDLGraphics::drawScreen()
     SDL_RenderClear(sdl_renderer);
 
 	//Draw border
+	/*
 	SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0x00, 0x00, 0xFF);
 	for(int border_index = 0; border_index < 5; border_index++)
 	{
 		SDL_RenderFillRect(sdl_renderer, &c8_border[border_index]);
-	}
+	}*/
 
 	//Draw c8 pixels
 	//SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x00, 0x00, 0xFF);
