@@ -108,7 +108,7 @@ int Chip8Emulator::loadProgram(const char* file_name)
         //Go to beginning of file
         open_file.seekg (0, ios::beg);
         //Store file in memory
-        open_file.read (file_in_memory, file_size);
+        open_file.read(file_in_memory, file_size);
         open_file.close();
 
         cout << "File Size: " << file_size << " bytes" << endl;
