@@ -129,6 +129,7 @@ int Chip8Emulator::loadProgram(const char* file_name)
         cout << "File not found: " << file_name << endl;
         return -1;
     }
+    return 0;
 }
 
 void Chip8Emulator::fetchOpcode()
@@ -157,7 +158,9 @@ void Chip8Emulator::updateTimers()
 	{
 		//Console beeps if the sound timer gets to 1..
 		if(sound_timer == 1)
-			int x = 0;//TODO make this into a beep!
+        {
+            //TODO beep!
+        }
 		sound_timer--;
     }
 }
@@ -386,9 +389,15 @@ void Chip8Emulator::index_to_const(){
 //0xFX1E Adds VX to I.
 void Chip8Emulator::index_to_reg_add(){
     if (index_register + registers[nibble(2,opcode)] > 0xFFF) //VF =1 with overflow, 0 o.w.
+    {
         registers[0xF]=1;
+    }
     else
+    {
         registers[0xF]=0;
+    }
+        
+
 	index_register += registers[nibble(2,opcode)];
 }
 
