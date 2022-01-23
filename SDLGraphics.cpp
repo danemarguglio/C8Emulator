@@ -281,18 +281,14 @@ void SDLGraphics::eventLoop()
 
 		SDL_Delay(1);
 	}
-
 	return;
 }
 
 
 SDLGraphics::~SDLGraphics(void)
 {
-	//Destroy renderer
 	SDL_DestroyRenderer(sdl_renderer);
-    //Destroy window
     SDL_DestroyWindow(sdl_window);
     sdl_window = NULL;
-
     SDL_Quit();
 }
