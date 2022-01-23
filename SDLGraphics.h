@@ -9,6 +9,7 @@ class SDLGraphics
 	//Chip-8 Emulator
 	Chip8Emulator chip8emulator;
 
+
 	//Chip 8 is 64x32
 	const int SCREEN_WIDTH = 640;
 	const int SCREEN_HEIGHT = 320;

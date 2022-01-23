@@ -3,7 +3,16 @@
 
 SDLGraphics::SDLGraphics(std::string binary_path)
 {
-	chip8emulator.loadProgram(binary_path.c_str());
+	if (chip8emulator.loadProgram(binary_path.c_str()) == -1)
+	{
+		std::cout << "Error loading program" << std::endl;
+		quit = true;
+	}
+	else 
+	{
+		quit = false;
+	}
+	
 
 	//Window Titles
 	window_title_unpaused = "Chip-8 Emulator";
@@ -30,9 +39,6 @@ SDLGraphics::SDLGraphics(std::string binary_path)
 			c8_graphics[x][y].h = screen_scale_x;
 		}
 	} 
-
-	//Event loop quit
-	quit = false;
 
 	//Window
 	sdl_window = NULL;
