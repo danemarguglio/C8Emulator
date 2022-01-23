@@ -3,7 +3,7 @@
 
 SDLGraphics::SDLGraphics(void)
 {
-	chip8emulator.loadProgram("C8Games\\PONG2");
+	chip8emulator.loadProgram("C8Games/PONG2");
 
 	//Window Titles
 	window_title_unpaused = "Chip-8 Emulator";

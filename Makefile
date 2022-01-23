@@ -13,7 +13,7 @@ $(EXECUTABLE): $(OBJECTS)
 main.o: main.cpp Chip8Emulator.h SDLGraphics.h
 	$(CC) $(CFLAGS) $< -o $@
 
-Chip8Emulator.o: Chip8Emulator.cpp chip8emulator.h
+Chip8Emulator.o: Chip8Emulator.cpp Chip8Emulator.h
 	$(CC) $(CFLAGS) $< -o $@
 
 SDLGraphics.o: SDLGraphics.cpp SDLGraphics.h
