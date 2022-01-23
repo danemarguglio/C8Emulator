@@ -10,10 +10,10 @@ class SDLGraphics
 	Chip8Emulator chip8emulator;
 
 	//Chip 8 is 64x32
-	static const int SCREEN_WIDTH = 640;
-	static const int SCREEN_HEIGHT = 480;
-	static const int screen_scale_x = 9;
-	static const int screen_scale_y = 9;
+	const int SCREEN_WIDTH = 640;
+	const int SCREEN_HEIGHT = 320;
+	const int screen_scale_x = 9;
+	const int screen_scale_y = 9;
 
 	//SDL Window
 	SDL_Window* sdl_window;
