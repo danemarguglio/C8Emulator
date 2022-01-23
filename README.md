@@ -4,9 +4,9 @@ Simple Chip-8 emulator written in C++. Uses [SDL2](https://www.libsdl.org/) to r
 Written by [Dane Marguglio](https://github.com/danemarguglio) & [Joel Willoughby](https://github.com/JoelWilloughby) circa 2015.
 
 
-![Pong](img/pong.png "Pong")
+![Pong](Images/pong.png "Pong")
 
-![Opcode-Test](img/opcode_test.png "Opcode-test")
+![Opcode-Test](Images/opcode_test.png "Opcode-test")
 
 
 

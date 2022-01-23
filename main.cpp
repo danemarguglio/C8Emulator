@@ -1,5 +1,5 @@
 #include <iostream>
-#include "SDLGraphics.h"
+#include "Graphics/SDLGraphics.h"
 
 #ifdef main
 	#undef main

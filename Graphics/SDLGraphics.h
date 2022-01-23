@@ -1,8 +1,8 @@
 #pragma once
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdio.h>
-#include "Chip8Emulator.h"
+#include "../Emulator/Chip8Emulator.h"
 
 class SDLGraphics
 {
