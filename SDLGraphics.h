@@ -48,7 +48,7 @@ class SDLGraphics
 	void handleInputUp();
 
 public:
-	SDLGraphics(void);
+	SDLGraphics(std::string binary_path);
 	~SDLGraphics(void);
 	void eventLoop();
 };

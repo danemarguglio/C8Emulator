@@ -1,9 +1,9 @@
 #include "SDLGraphics.h"
 
 
-SDLGraphics::SDLGraphics(void)
+SDLGraphics::SDLGraphics(std::string binary_path)
 {
-	chip8emulator.loadProgram("C8Games/PONG2");
+	chip8emulator.loadProgram(binary_path.c_str());
 
 	//Window Titles
 	window_title_unpaused = "Chip-8 Emulator";
@@ -38,7 +38,7 @@ SDLGraphics::SDLGraphics(void)
 	sdl_window = NULL;
     
 	//Renderer
-	sdl_renderer;
+	sdl_renderer = NULL;
 
     //Initi SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
