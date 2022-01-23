@@ -32,8 +32,8 @@ Compile the code using the `make` command.
 
 ## Run
 ```console
-./Chip8 C8Games/PONG
-./Chip8 C8Games/CONNECT4
+./Chip8 Roms/PONG
+./Chip8 Roms/CONNECT4
 ```
 
 ### Control
