@@ -9,8 +9,6 @@ If you'd like to take an exploration of a CHIP-8 binary, take a look at [Pong Ex
 
 ![Blinky](Images/blinky.png "Blinky")
 ![Opcode-Test](Images/opcode_test.png "Opcode-test")
-![Pong](Images/pong.png "Pong")
-
 
 <br/>
 
