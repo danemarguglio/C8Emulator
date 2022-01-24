@@ -663,10 +663,9 @@ void Chip8Emulator::setInputUp(int index)
 }
 
 //Returns a copy of the graphics array
-unsigned char * Chip8Emulator::getGraphics(){
-	unsigned char *gfx= new unsigned char[XGFXSIZE*YGFXSIZE];
-	memcpy(gfx, &graphics, sizeof(unsigned char[XGFXSIZE*YGFXSIZE]));
-	return gfx;
+unsigned char * Chip8Emulator::getGraphics()
+{
+	return graphics;
 }
 
 //Old text based grapics
