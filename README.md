@@ -36,6 +36,7 @@ g++ main.o Emulator/Chip8Emulator.o Graphics/SDLGraphics.o `sdl2-config --libs` 
 <br/>
 
 ## Run
+Pass in the path to a binary rom file as a single argument to the application.
 ```console
 dane@pc:~/repos/C8Emulator$ ./Chip8 Roms/PONG
 ```
