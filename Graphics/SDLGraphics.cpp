@@ -256,6 +256,7 @@ void SDLGraphics::handleInputUp()
 
 void SDLGraphics::eventLoop()
 {
+	graphics = chip8emulator.getGraphics();
 	while(!quit)
 	{
 		while( SDL_PollEvent(&sdl_event) != 0 )
@@ -280,15 +281,12 @@ void SDLGraphics::eventLoop()
 
 			if (chip8emulator.get_draw())
 			{
-				graphics = chip8emulator.getGraphics();
 				drawScreen();
 				chip8emulator.setDrawFlag(false);
 			}
 		}
-
 		SDL_Delay(1);
 	}
-	return;
 }
 
 
