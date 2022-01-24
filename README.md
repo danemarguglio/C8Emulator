@@ -26,17 +26,31 @@ sudo apt-get install libsdl2-dev
 ```
 
 Compile the code using the `make` command.
+```console
+dane@pc:~/repos/C8Emulator$ make
+g++ -c -Wall `sdl2-config --cflags` main.cpp -o main.o
+g++ main.o Emulator/Chip8Emulator.o Graphics/SDLGraphics.o `sdl2-config --libs` -o Chip8
+```
 
 
 <br/>
 
 ## Run
 ```console
-./Chip8 Roms/PONG
-./Chip8 Roms/CONNECT4
+dane@pc:~/repos/C8Emulator$ ./Chip8 Roms/PONG
 ```
 
-### Control
-TODO
-- 1, 2, 3, 4, q, w, e, r
-- a, s, d, f, z, x, c, v
+### Controls
+Input for the Chip-8 was done with a hex keyboard.
+- Chip-8 Keyboard
+  - 1 2 3 C
+  - 4 5 6 D
+  - 7 8 9 E
+  - A 0 B F
+
+
+- Mapped Keys
+  - 1 2 3 4
+  - Q W E R
+  - A S D F
+  - Z X C V
