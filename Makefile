@@ -21,3 +21,4 @@ SDLGraphics.o: Graphics/SDLGraphics.cpp Graphics/SDLGraphics.h
 
 clean:
 	rm *.o Chip8
+	rm */*.o

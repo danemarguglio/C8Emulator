@@ -13,8 +13,8 @@ class SDLGraphics
 	//Chip 8 is 64x32
 	const int SCREEN_WIDTH = 640;
 	const int SCREEN_HEIGHT = 320;
-	const int screen_scale_x = 9;
-	const int screen_scale_y = 9;
+	const int screen_scale_x = 10;
+	const int screen_scale_y = 10;
 
 	//SDL Window
 	SDL_Window* sdl_window;
