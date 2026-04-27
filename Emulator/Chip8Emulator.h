@@ -120,9 +120,11 @@ public:
 	void setInputUp(int index);
 
 	bool get_draw(){return draw_flag;}
-	unsigned char get_pc(){return program_counter;}
+	unsigned int get_pc(){return program_counter;}
 	unsigned short get_opcode(){return opcode;}
 	void setDrawFlag(bool flag){draw_flag=flag;}
+
+	bool get_beep(){return sound_timer > 0;}
 
 	//Returns graphics array
 	unsigned char* getGraphics();

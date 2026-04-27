@@ -1,25 +1,27 @@
 #include "SDLGraphics.h"
+#include <cmath>
 
 
 SDLGraphics::SDLGraphics(std::string binary_path)
+	: sdl_window(NULL),
+	  sdl_renderer(NULL),
+	  sdl_audio(0),
+	  beep_phase(0.0),
+	  quit(false),
+	  c8_paused(false),
+	  graphics(NULL),
+	  sdl_error(NULL)
 {
 	if (chip8emulator.loadProgram(binary_path.c_str()) == -1)
 	{
 		std::cout << "Error loading program" << std::endl;
 		quit = true;
+		return;
 	}
-	else 
-	{
-		quit = false;
-	}
-	
 
 	//Window Titles
 	window_title_unpaused = "Chip-8 Emulator";
 	window_title_paused = "Chip-8 Emulator  **PAUSED**";
-
-	//Unpause c8 emulator
-	c8_paused = false;
 
 	//Setup game border
 	c8_border[0].x = 0; c8_border[0].y = 0; c8_border[0].w = screen_scale_x*65; c8_border[0].h = screen_scale_y; //Top
@@ -36,46 +38,95 @@ SDLGraphics::SDLGraphics(std::string binary_path)
 			c8_graphics[x][y].x = x * screen_scale_x;
 			c8_graphics[x][y].y = y * screen_scale_y;
 			c8_graphics[x][y].w = screen_scale_x;
-			c8_graphics[x][y].h = screen_scale_x;
-		}
-	} 
-
-	//Window
-	sdl_window = NULL;
-    
-	//Renderer
-	sdl_renderer = NULL;
-
-    //Initi SDL
-    if(SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-        sdl_error = SDL_GetError();
-        std::cout << "Error Init " << sdl_error << std::endl;
-    }
-    else
-    {
-        //Create window
-		sdl_window = SDL_CreateWindow(window_title_unpaused, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-
-        if(sdl_window == NULL)
-        {
-            sdl_error = SDL_GetError();
-        }
-        else
-        {
-			sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED );
-			
-			if(sdl_renderer == NULL)
-				sdl_error = SDL_GetError();
-			else
-			{
-				//Initialize renderer color
-				SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
-			}
+			c8_graphics[x][y].h = screen_scale_y;
 		}
 	}
 
+	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+	{
+		sdl_error = SDL_GetError();
+		std::cout << "Error Init " << sdl_error << std::endl;
+		quit = true;
+		return;
+	}
 
+	sdl_window = SDL_CreateWindow(window_title_unpaused, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	if(sdl_window == NULL)
+	{
+		sdl_error = SDL_GetError();
+		std::cout << "Error CreateWindow " << sdl_error << std::endl;
+		quit = true;
+		return;
+	}
+
+	sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
+	if(sdl_renderer == NULL)
+	{
+		sdl_error = SDL_GetError();
+		std::cout << "Error CreateRenderer " << sdl_error << std::endl;
+		quit = true;
+		return;
+	}
+	SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+	// Audio: square-wave beep generated on demand and queued.
+	SDL_AudioSpec want;
+	SDL_zero(want);
+	want.freq = 44100;
+	want.format = AUDIO_S16SYS;
+	want.channels = 1;
+	want.samples = 1024;
+	want.callback = NULL;
+	sdl_audio = SDL_OpenAudioDevice(NULL, 0, &want, NULL, 0);
+	if(sdl_audio == 0)
+	{
+		// Non-fatal: run silently if audio init fails.
+		std::cout << "Audio init failed: " << SDL_GetError() << std::endl;
+	}
+	else
+	{
+		SDL_PauseAudioDevice(sdl_audio, 0);
+	}
+}
+
+void SDLGraphics::updateBeep(bool on)
+{
+	if(sdl_audio == 0)
+		return;
+	if(!on)
+	{
+		SDL_ClearQueuedAudio(sdl_audio);
+		beep_phase = 0.0;
+		return;
+	}
+	// Top up the queue so we always have ~1/60s of audio buffered.
+	const int sample_rate = 44100;
+	const int target_samples = sample_rate / 30;
+	const int queued_bytes = SDL_GetQueuedAudioSize(sdl_audio);
+	const int queued_samples = queued_bytes / sizeof(Sint16);
+	if(queued_samples >= target_samples)
+		return;
+
+	const int needed = target_samples - queued_samples;
+	const double tone_hz = 440.0;
+	const double step = 2.0 * M_PI * tone_hz / sample_rate;
+	Sint16 buf[2048];
+	int written = 0;
+	while(written < needed)
+	{
+		int chunk = needed - written;
+		if(chunk > (int)(sizeof(buf)/sizeof(buf[0])))
+			chunk = sizeof(buf)/sizeof(buf[0]);
+		for(int i = 0; i < chunk; i++)
+		{
+			buf[i] = (std::sin(beep_phase) >= 0.0) ? 6000 : -6000;
+			beep_phase += step;
+			if(beep_phase > 2.0 * M_PI)
+				beep_phase -= 2.0 * M_PI;
+		}
+		SDL_QueueAudio(sdl_audio, buf, chunk * sizeof(Sint16));
+		written += chunk;
+	}
 }
 
 void SDLGraphics::drawScreen()
@@ -257,43 +308,59 @@ void SDLGraphics::handleInputUp()
 void SDLGraphics::eventLoop()
 {
 	graphics = chip8emulator.getGraphics();
+
+	// CPU runs at ~540Hz (about 9 instructions per 60Hz timer tick).
+	// Timers tick at exactly 60Hz, independent of the CPU rate.
+	const Uint32 timer_period_ms = 1000 / 60;
+	const int cpu_per_timer_tick = 9;
+
+	Uint32 next_timer_tick = SDL_GetTicks();
+
 	while(!quit)
 	{
-		while( SDL_PollEvent(&sdl_event) != 0 )
+		while(SDL_PollEvent(&sdl_event) != 0)
 		{
 			if(sdl_event.type == SDL_QUIT)
-			{
 				quit = true;
-			}
 			else if(sdl_event.type == SDL_KEYUP)
-			{
 				handleInputUp();
-			}
 			else if(sdl_event.type == SDL_KEYDOWN)
-			{
 				handleInputDown();
-			}
 		}
 
-		if(!c8_paused)
+		Uint32 now = SDL_GetTicks();
+		if(!c8_paused && (Sint32)(now - next_timer_tick) >= 0)
 		{
-			chip8emulator.cycleCPU();
+			for(int i = 0; i < cpu_per_timer_tick; i++)
+				chip8emulator.cycleCPU();
 
-			if (chip8emulator.get_draw())
+			chip8emulator.updateTimers();
+			updateBeep(chip8emulator.get_beep());
+
+			if(chip8emulator.get_draw())
 			{
 				drawScreen();
 				chip8emulator.setDrawFlag(false);
 			}
+			next_timer_tick += timer_period_ms;
 		}
-		SDL_Delay(1);
+		else
+		{
+			SDL_Delay(1);
+		}
 	}
 }
 
 
 SDLGraphics::~SDLGraphics(void)
 {
-	SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(sdl_window);
-    sdl_window = NULL;
-    SDL_Quit();
+	if(sdl_audio != 0)
+		SDL_CloseAudioDevice(sdl_audio);
+	if(sdl_renderer != NULL)
+		SDL_DestroyRenderer(sdl_renderer);
+	if(sdl_window != NULL)
+		SDL_DestroyWindow(sdl_window);
+	sdl_renderer = NULL;
+	sdl_window = NULL;
+	SDL_Quit();
 }

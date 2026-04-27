@@ -26,6 +26,10 @@ class SDLGraphics
 	//SDL Renderer
 	SDL_Renderer* sdl_renderer;
 
+	//SDL audio device for the beep
+	SDL_AudioDeviceID sdl_audio;
+	double beep_phase;
+
 	//Sdl events
 	SDL_Event sdl_event;
 
@@ -47,10 +51,18 @@ class SDLGraphics
 	void drawScreen();
 	void handleInputDown();
 	void handleInputUp();
+	void updateBeep(bool on);
 
 public:
 	SDLGraphics(std::string binary_path);
 	~SDLGraphics(void);
+
+	// Non-copyable, non-movable: owns SDL resources.
+	SDLGraphics(const SDLGraphics&) = delete;
+	SDLGraphics& operator=(const SDLGraphics&) = delete;
+	SDLGraphics(SDLGraphics&&) = delete;
+	SDLGraphics& operator=(SDLGraphics&&) = delete;
+
 	void eventLoop();
 };
 

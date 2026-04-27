@@ -4,7 +4,7 @@
 //        nibble(1,num) -> C
 //        nibble(2,num) -> B
 //        nibble(3,num) -> A
-#define nibble(index,num) ((num & (0x000F << 4*index)) >> (4*index))
+#define nibble(index,num) (((num) & (0x000F << (4*(index)))) >> (4*(index)))
 
 
 
@@ -93,42 +93,38 @@ Chip8Emulator::~Chip8Emulator(void)
 
 int Chip8Emulator::loadProgram(const char* file_name)
 {
-    //Load program into memory!
     using namespace std;
-    
+
     ifstream open_file(file_name, ios::in|ios::binary|ios::ate);
-    int size;
-    
-    if (open_file.is_open())
-    {
-        cout << "Opened file " << file_name << endl;
-        streampos file_size = open_file.tellg();
-        size = (int)open_file.tellg();
-        char * file_in_memory = new char [(int)file_size];
-        //Go to beginning of file
-        open_file.seekg (0, ios::beg);
-        //Store file in memory
-        open_file.read(file_in_memory, file_size);
-        open_file.close();
-
-        cout << "File Size: " << file_size << " bytes" << endl;
-        //TODO check if file meets our critera for openin!
-
-        //Put file in Chip-8 memory starting at 0x200
-        memcpy ( &(memory[0x200]) , file_in_memory, size);
-        delete[] file_in_memory;
-
-		/*
-        for(int i=0;i<size;i+=2)
-            printf("[%x] : %x\n", 0x200 + i, (memory[0x200+i] << 8) | memory[0x200 + i + 1]);
-        return 0;
-		*/
-    }
-    else
+    if(!open_file.is_open())
     {
         cout << "File not found: " << file_name << endl;
         return -1;
     }
+
+    streampos file_size = open_file.tellg();
+    if(file_size <= 0)
+    {
+        cout << "Empty or unreadable file: " << file_name << endl;
+        return -1;
+    }
+
+    const size_t max_rom_size = MEMORYSIZE - 0x200;
+    if(static_cast<size_t>(file_size) > max_rom_size)
+    {
+        cout << "ROM too large: " << file_size << " bytes (max " << max_rom_size << ")" << endl;
+        return -1;
+    }
+
+    open_file.seekg(0, ios::beg);
+    open_file.read(reinterpret_cast<char*>(&memory[0x200]), file_size);
+    if(!open_file)
+    {
+        cout << "Failed to read ROM: " << file_name << endl;
+        return -1;
+    }
+
+    cout << "Opened file " << file_name << " (" << file_size << " bytes)" << endl;
     return 0;
 }
 
@@ -144,25 +140,16 @@ void Chip8Emulator::fetchOpcode()
 void Chip8Emulator::cycleCPU()
 {
     fetchOpcode();
-	decodeOpcode();
-	updateTimers();
-	return;
+    decodeOpcode();
 }
 
+// Should be called at 60Hz, independent of the CPU rate.
 void Chip8Emulator::updateTimers()
 {
-	if(delay_timer > 0)
-		delay_timer--;
-
-	if(sound_timer > 0)
-	{
-		//Console beeps if the sound timer gets to 1..
-		if(sound_timer == 1)
-        {
-            //TODO beep!
-        }
-		sound_timer--;
-    }
+    if(delay_timer > 0)
+        delay_timer--;
+    if(sound_timer > 0)
+        sound_timer--;
 }
 
 //Report opcode errors
@@ -205,7 +192,7 @@ void Chip8Emulator::reg_to_rand(){
     registers[nibble(2,opcode)] = (opcode & 0x00FF) & (rand()%0xFF);
 }
 
-//0x6XNN Adds VX to NN.
+//0x7XNN Adds NN to VX.
 void Chip8Emulator::reg_to_const_add(){
 	registers[nibble(2,opcode)] += opcode & 0x00FF;
 }
@@ -239,22 +226,23 @@ void Chip8Emulator::reg_to_reg_xor(){
 }
 
 // VX = VY + VX
-// VF = overflow ? 1 : 0
+// VF = carry ? 1 : 0  (set last so X=0xF still gets the flag)
 void Chip8Emulator::reg_to_reg_add(){
     unsigned char x = nibble(2,opcode);
     unsigned char y = nibble(1,opcode);
     unsigned temp = registers[x] + registers[y];
-    registers[0xF] = (temp & 0xFF00) ? 1 : 0;
     registers[x] = temp;
+    registers[0xF] = (temp & 0xFF00) ? 1 : 0;
 }
 
 // VX = VX - VY
-// VF = borrow ? 1 : 0
+// VF = borrow ? 0 : 1
 void Chip8Emulator::reg_to_reg_sub(){
     unsigned char x = nibble(2,opcode);
     unsigned char y = nibble(1,opcode);
-    registers[0xF] = (registers[y] > registers[x]) ? 0 : 1;
+    unsigned char no_borrow = (registers[y] > registers[x]) ? 0 : 1;
     registers[x] = registers[x] - registers[y];
+    registers[0xF] = no_borrow;
 }
 
 // VX = VY - VX
@@ -262,31 +250,28 @@ void Chip8Emulator::reg_to_reg_sub(){
 void Chip8Emulator::reg_to_reg_sub_inv(){
     unsigned char x = nibble(2,opcode);
     unsigned char y = nibble(1,opcode);
-    registers[0xF] = (registers[y] < registers[x]) ? 0 : 1;
+    unsigned char no_borrow = (registers[y] < registers[x]) ? 0 : 1;
     registers[x] = registers[y] - registers[x];
+    registers[0xF] = no_borrow;
 }
 
 // VX = VX >> 1
-// VF = right of VX
+// VF = LSB of VX before shift
 void Chip8Emulator::reg_shift_rt(){
     unsigned char x = nibble(2,opcode);
-    registers[0xf] = (registers[x] & 0x1);
+    unsigned char lsb = registers[x] & 0x1;
     registers[x] = registers[x] >> 1;
+    registers[0xF] = lsb;
 }
 
 // VX = VX << 1
-// VF = left of VX
+// VF = MSB of VX before shift
 void Chip8Emulator::reg_shift_lt(){
-	
     unsigned char x = nibble(2,opcode);
-    registers[0xF] = (registers[x] & 0x80);
+    unsigned char msb = (registers[x] & 0x80) >> 7;
     registers[x] = registers[x] << 1;
-	
-	/*
-	registers[0xF] = registers[opcode&0x0F00 >> 8] >> 7;
-	registers[(opcode&0x0F00)>>8]<<=1;
-	*/
-	}
+    registers[0xF] = msb;
+}
 
 //Program_couter++
 void Chip8Emulator::increment_pc(){
@@ -310,20 +295,24 @@ void Chip8Emulator::clear_screen(){
 }
 
 void Chip8Emulator::subr_return(){
-    stack_pointer--; //Dec stack pointer
-    program_counter = stack[stack_pointer]; //Set program counter to the value we pushed on the stack from call subroutine
+    if(stack_pointer == 0)
+    {
+        std::cout << "Stack underflow at pc=0x" << std::hex << program_counter << std::dec << std::endl;
+        return;
+    }
+    stack_pointer--;
+    program_counter = stack[stack_pointer];
 }
 
 void Chip8Emulator::subr_call(){
-    stack[stack_pointer] = program_counter; //Store program counter on the stack
-    //Prevent writing to out of bounds on stack
-    if(stack_pointer < STACKSIZE)
+    if(stack_pointer >= STACKSIZE)
     {
-        program_counter = opcode & 0x0FFF;//Same as above opcode
-        stack_pointer++;
+        std::cout << "Stack overflow at pc=0x" << std::hex << program_counter << std::dec << std::endl;
+        return;
     }
-    else
-        std::cout << "Stack error";
+    stack[stack_pointer] = program_counter;
+    stack_pointer++;
+    program_counter = opcode & 0x0FFF;
 }
 
 //0x3XNN Skips the next instruction if VX equals NN.
@@ -388,17 +377,9 @@ void Chip8Emulator::index_to_const(){
 
 //0xFX1E Adds VX to I.
 void Chip8Emulator::index_to_reg_add(){
-    if (index_register + registers[nibble(2,opcode)] > 0xFFF) //VF =1 with overflow, 0 o.w.
-    {
-        registers[0xF]=1;
-    }
-    else
-    {
-        registers[0xF]=0;
-    }
-        
-
-	index_register += registers[nibble(2,opcode)];
+    unsigned char overflow = (index_register + registers[nibble(2,opcode)] > 0xFFF) ? 1 : 0;
+    index_register += registers[nibble(2,opcode)];
+    registers[0xF] = overflow;
 }
 
 //0xFX29 Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
@@ -421,7 +402,7 @@ void Chip8Emulator::delay_to_reg(){
     delay_timer = registers[nibble(2,opcode)];
 }
 
-//0xFX18 Sets the delay timer to VX.
+//0xFX18 Sets the sound timer to VX.
 void Chip8Emulator::sound_to_reg(){
     sound_timer = registers[nibble(2,opcode)];
 }
@@ -439,7 +420,7 @@ void Chip8Emulator::draw(){
     unsigned short y = registers[nibble(1,opcode)];
     unsigned short draw_height = nibble(0,opcode);
     unsigned char draw_pixel;
-    
+
     registers[0xF] = 0;
     for(int y_line = 0; y_line < draw_height; y_line++)
     {
@@ -447,14 +428,15 @@ void Chip8Emulator::draw(){
         for(int x_line = 0; x_line < 8; x_line++)
         {
             unsigned char pixel = (draw_pixel & (0x80 >> x_line)) >> (7 - x_line);
-            unsigned char graph1 = graphics[x + x_line + ((y + y_line)*64)];
-            graphics[x + x_line + ((y + y_line)*64)] ^= pixel;
-            unsigned char graph2 = graphics[x + x_line + ((y + y_line)*64)];
-            if(graph1 && !graph2)
+            int px = (x + x_line) % XGFXSIZE;
+            int py = (y + y_line) % YGFXSIZE;
+            int idx = px + py * XGFXSIZE;
+            if(pixel && graphics[idx])
                 registers[0xF] = 1;
+            graphics[idx] ^= pixel;
         }
     }
-        
+
     draw_flag = true;
 }
 
